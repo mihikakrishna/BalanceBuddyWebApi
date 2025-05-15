@@ -11,18 +11,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ✅ First, register DbContext
 // Add EF Core with factory support (safe for singleton)
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite("Data Source=balancebuddy.db"));
 
 builder.Services.AddSingleton<UndoManager>();
 
-// ✅ Then register DbContextFactory for safe usage in singleton
 builder.Services.AddDbContextFactory<AppDbContext>();
 builder.Services.AddSingleton<UndoManager>();
 
-// ✅ Register statement parsers
 builder.Services.AddScoped<IBankStatementParser, WellsFargoParser>();
 builder.Services.AddScoped<IBankStatementParser, ChaseParser>();
 builder.Services.AddScoped<IBankStatementParser, AmericanExpressParser>();
@@ -33,7 +30,6 @@ builder.Services.AddScoped<BankStatementParserRegistry>();
 
 var app = builder.Build();
 
-// ✅ Scoped context use for migration and seeding
 using (var scope = app.Services.CreateScope())
 {
     var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();

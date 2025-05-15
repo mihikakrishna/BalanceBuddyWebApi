@@ -68,7 +68,7 @@ const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
     const handleUndo = async () => {
         try {
             await undo();
-            console.log("Calling refreshExpenses after undo"); // ✅ Add this
+            console.log("Calling refreshExpenses after undo");
             refreshExpenses();
             enqueueSnackbar("Undo successful", { variant: "success" });
         } catch (err) {
