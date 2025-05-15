@@ -5,6 +5,7 @@ using CsvHelper;
 using CsvHelper.Configuration;
 using CsvHelper.Configuration.Attributes;
 using BalanceBuddyWebApi.Models;
+using BalanceBuddyWebApi.Data;
 
 namespace BalanceBuddyWebApi.Services.Parsers;
 
@@ -24,6 +25,7 @@ public class ChaseParser : IBankStatementParser
 {
     public string BankId => "Chase";
     private readonly AppDbContext _context;
+
     public ChaseParser(AppDbContext context) => _context = context;
 
     public void ParseStatement(Stream csvStream)

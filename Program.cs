@@ -16,7 +16,7 @@ builder.Services.AddScoped<IBankStatementParser, AmericanExpressParser>();
 builder.Services.AddScoped<IBankStatementParser, BankOfAmericaParser>();
 builder.Services.AddScoped<IBankStatementParser, CapitalOneCreditParser>();
 builder.Services.AddScoped<IBankStatementParser, CapitalOneSavingsParser>();
-builder.Services.AddSingleton<BankStatementParserRegistry>();
+builder.Services.AddScoped<BankStatementParserRegistry>();
 
 
 // Add SQLite
