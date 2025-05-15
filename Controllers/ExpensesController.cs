@@ -2,6 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using BalanceBuddyWebApi.Data;
 using BalanceBuddyWebApi.Models;
+using BalanceBuddyWebApi.Services;
+
 
 namespace BalanceBuddyWebApi.Controllers;
 
@@ -11,9 +13,12 @@ public class ExpensesController : ControllerBase
 {
     private readonly AppDbContext _context;
 
-    public ExpensesController(AppDbContext context)
+    private readonly UndoManager _undo;
+
+    public ExpensesController(AppDbContext context, UndoManager undo)
     {
         _context = context;
+        _undo = undo;
     }
 
     // GET: api/expenses
@@ -44,7 +49,7 @@ public class ExpensesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Expense>> PostExpense(Expense expense)
     {
-        // Default to "Unreviewed" if CategoryId is 0 or invalid
+        // Assign default category if invalid
         if (!_context.ExpenseCategories.Any(c => c.Id == expense.CategoryId))
         {
             expense.CategoryId = _context.ExpenseCategories
@@ -54,20 +59,64 @@ public class ExpensesController : ControllerBase
         _context.Expenses.Add(expense);
         await _context.SaveChangesAsync();
 
+        // Capture ID to reuse for undo
+        int newId = expense.Id;
+
+        _undo.Push(new TransactionOperation
+        {
+            Undo = () =>
+            {
+                var existing = _context.Expenses.Find(newId);
+                if (existing != null)
+                {
+                    _context.Expenses.Remove(existing);
+                    _context.SaveChanges();
+                }
+            },
+            Redo = () =>
+            {
+                _context.Expenses.Add(expense);
+                _context.SaveChanges();
+            }
+        });
+
         return CreatedAtAction(nameof(GetExpense), new { id = expense.Id }, expense);
     }
+
 
     // DELETE: api/expenses/5
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteExpense(int id)
     {
-        var expense = await _context.Expenses.FindAsync(id);
+        var expense = await _context.Expenses
+            .Include(e => e.Category)
+            .FirstOrDefaultAsync(e => e.Id == id);
+
         if (expense == null)
             return NotFound();
 
         _context.Expenses.Remove(expense);
         await _context.SaveChangesAsync();
 
+        _undo.Push(new TransactionOperation
+        {
+            Undo = () =>
+            {
+                _context.Expenses.Add(expense);
+                _context.SaveChanges();
+            },
+            Redo = () =>
+            {
+                var toDelete = _context.Expenses.Find(id);
+                if (toDelete != null)
+                {
+                    _context.Expenses.Remove(toDelete);
+                    _context.SaveChanges();
+                }
+            }
+        });
+
         return NoContent();
     }
+
 }
