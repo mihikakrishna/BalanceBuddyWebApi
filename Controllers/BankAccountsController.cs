@@ -17,11 +17,14 @@ public class BankAccountsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<BankAccount>>> GetBankAccounts()
+    public ActionResult<IEnumerable<BankAccount>> GetBankAccounts()
     {
-        return await _context.BankAccounts
-            .OrderByDescending(b => b.Balance)
-            .ToListAsync();
+        var accounts = _context.BankAccounts
+            .AsEnumerable()
+            .OrderByDescending(b => (double)b.Balance)
+            .ToList();
+
+        return accounts;
     }
 
     [HttpPost]

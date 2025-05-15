@@ -50,6 +50,7 @@ public class ExpensesController : ControllerBase
     public async Task<ActionResult<Expense>> PostExpense(Expense expense)
     {
         // Assign default category if invalid
+        // Validate or default category
         if (!_context.ExpenseCategories.Any(c => c.Id == expense.CategoryId))
         {
             expense.CategoryId = _context.ExpenseCategories
@@ -82,6 +83,48 @@ public class ExpensesController : ControllerBase
 
         return CreatedAtAction(nameof(GetExpense), new { id = expense.Id }, expense);
     }
+
+    // PUT: api/expenses/5
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutExpense(int id, Expense updatedExpense)
+    {
+        if (id != updatedExpense.Id)
+        {
+            return BadRequest("Expense ID mismatch.");
+        }
+
+        var existing = await _context.Expenses.FindAsync(id);
+        if (existing == null)
+        {
+            return NotFound();
+        }
+
+        // Update properties
+        existing.Amount = updatedExpense.Amount;
+        existing.Date = updatedExpense.Date;
+        existing.Description = updatedExpense.Description;
+        existing.CategoryId = updatedExpense.CategoryId;
+        existing.BankIconPath = updatedExpense.BankIconPath;
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!_context.Expenses.Any(e => e.Id == id))
+            {
+                return NotFound();
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        return NoContent();
+    }
+
 
 
     // DELETE: api/expenses/5

@@ -48,7 +48,7 @@ const ExpensesList = ({ expenses, onDelete }) => {
                         ? updatedRow.date.toISOString()
                         : "",
                 description: updatedRow.description,
-                expenseCategoryId: updatedRow.expenseCategoryId || 0,
+                categoryId: updatedRow.expenseCategoryId || 0,
             };
 
             await updateExpense(updatedRow.id, updatedPayload);

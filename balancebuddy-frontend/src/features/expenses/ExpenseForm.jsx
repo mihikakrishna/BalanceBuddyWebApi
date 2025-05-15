@@ -24,14 +24,14 @@ const ExpenseForm = ({ onSubmit }) => {
         date: null,
         description: "",
         amount: "",
-        expenseCategoryId: "",
+        categoryId: "",
     });
 
     const [categories, setCategories] = useState([]);
     const [open, setOpen] = useState(false);
 
     useEffect(() => {
-        fetch("/api/expensecategory")
+        fetch("/api/expensecategories")
             .then((res) => {
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 return res.json();
@@ -48,13 +48,14 @@ const ExpenseForm = ({ onSubmit }) => {
         e.preventDefault();
         await onSubmit({
             ...formData,
+            amount: parseFloat(formData.amount),
             date: formData.date?.toISOString() || "",
         });
         setFormData({
             date: null,
             description: "",
             amount: "",
-            expenseCategoryId: "",
+            categoryId: "",
         });
         setOpen(false);
     };
@@ -123,8 +124,8 @@ const ExpenseForm = ({ onSubmit }) => {
                             <InputLabel id="category-label">Category</InputLabel>
                             <Select
                                 labelId="category-label"
-                                name="expenseCategoryId"
-                                value={formData.expenseCategoryId}
+                                name="categoryId"
+                                value={formData.categoryId}
                                 label="Category"
                                 onChange={handleChange}
                             >

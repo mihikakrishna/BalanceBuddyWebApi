@@ -2,6 +2,7 @@ using BalanceBuddyWebApi.Data;
 using BalanceBuddyWebApi.Services;
 using Microsoft.EntityFrameworkCore;
 using BalanceBuddyWebApi.Services.Parsers;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,29 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=balancebuddy.db")); // Use existing or new .db
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+
+    if (!db.ExpenseCategories.Any(c => c.Name == "Unreviewed"))
+    {
+        db.ExpenseCategories.Add(new ExpenseCategory
+        {
+            Name = "Unreviewed",
+            Budget = null
+        });
+        db.SaveChanges();
+    }
+
+    var categories = db.ExpenseCategories.ToList();
+    Debug.WriteLine("=== Expense Categories in DB ===");
+    foreach (var cat in categories)
+    {
+        Debug.WriteLine($"ID: {cat.Id}, Name: {cat.Name}, Budget: {cat.Budget}");
+    }
+}
 
 if (app.Environment.IsDevelopment())
 {

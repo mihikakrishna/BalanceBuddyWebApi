@@ -1,4 +1,4 @@
-const BASE_URL = "/api/expensecategory";
+const BASE_URL = "/api/expensecategories";
 
 export async function fetchCategories() {
     const res = await fetch(BASE_URL);
@@ -17,7 +17,7 @@ export async function createExpenseCategory(category) {
 }
 
 export async function deleteExpenseCategory(id) {
-    const res = await fetch(`/api/expensecategory/${id}`, {
+    const res = await fetch(`${BASE_URL}/${id}`, {
         method: "DELETE",
     });
     if (!res.ok) throw new Error("Failed to delete category");

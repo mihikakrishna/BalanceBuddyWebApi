@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 const BASE_URL = "/api/expenses";
 
 export async function fetchExpenses() {
@@ -8,36 +7,13 @@ export async function fetchExpenses() {
 }
 
 export async function createExpense(expense) {
-    const { id, category, amount, expenseCategoryId, ...rest } = expense;
-    const safeExpense = {
-        ...rest,
-        amount: parseFloat(amount || "0"),
-        expenseCategoryId: parseInt(expenseCategoryId || "0")
-    };
-
-    console.log("Creating with payload:", safeExpense);
-
     const res = await fetch(BASE_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(safeExpense),
+        body: JSON.stringify(expense),
     });
-
     if (!res.ok) throw new Error("Failed to create expense");
     return await res.json();
-}
-
-export async function updateExpense(id, updatedExpense) {
-    const res = await fetch(`${BASE_URL}/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedExpense),
-    });
-
-    if (!res.ok) throw new Error("Failed to update expense");
-
-    const text = await res.text();
-    return text ? JSON.parse(text) : null;
 }
 
 export async function deleteExpense(id) {
@@ -45,4 +21,22 @@ export async function deleteExpense(id) {
         method: "DELETE",
     });
     if (!res.ok) throw new Error("Failed to delete expense");
+}
+
+export async function updateExpense(id, expense) {
+    const res = await fetch(`/api/expenses/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(expense),
+    });
+
+    if (!res.ok) {
+        const text = await res.text();
+        console.error("Backend error:", res.status, text);
+        throw new Error("Failed to update expense");
+    }
+
+    if (res.status === 204) return;
+
+    return await res.json();
 }
