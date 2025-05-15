@@ -19,7 +19,7 @@ import {
 import { Brightness4, Brightness7 } from "@mui/icons-material";
 import ExpensesPage from "./pages/ExpensesPage";
 import IncomesPage from "./pages/IncomesPage";
-import WeatherForecast from "./pages/WeatherForecast";
+import ImportStatementsPage from "./pages/ImportStatementsPage";
 import SettingsPage from "./pages/SettingsPage";
 import { getTheme } from "./theme";
 
@@ -54,8 +54,8 @@ function App() {
                             <Button color="inherit" component={Link} to="/incomes">
                                 Incomes
                             </Button>
-                            <Button color="inherit" component={Link} to="/weather">
-                                Weather
+                            <Button color="inherit" component={Link} to="/import">
+                                Import Statements
                             </Button>
                             <Button color="inherit" component={Link} to="/settings">
                                 Settings
@@ -81,7 +81,7 @@ function App() {
                             <Routes>
                                 <Route path="/expenses" element={<ExpensesPage />} />
                                 <Route path="/incomes" element={<IncomesPage />} />
-                                <Route path="/weather" element={<WeatherForecast />} />
+                                <Route path="/import" element={<ImportStatementsPage />} />
                                 <Route
                                     path="/settings"
                                     element={<SettingsPage mode={mode} toggleMode={toggleMode} />}
