@@ -36,7 +36,11 @@ const ExpensesPage = () => {
         <div>
             <h2>Expenses Page</h2>
             <ExpenseForm onSubmit={handleCreate} />
-            {loading ? <p>Loading...</p> : <ExpensesList expenses={expenses} onDelete={handleDelete} />}
+            {loading ? <p>Loading...</p> : <ExpensesList
+                expenses={expenses}
+                onDelete={handleDelete}
+                refreshExpenses={loadExpenses}
+            />}
         </div>
     );
 };

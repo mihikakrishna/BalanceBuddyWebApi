@@ -8,6 +8,8 @@ import {
 import { Button, Typography, Box, Select, MenuItem } from "@mui/material";
 import { updateExpense } from "../../api/expenses";
 import { fetchCategories } from "../../api/expenseCategory";
+import { undo, redo } from "../../api/undo";
+import { useSnackbar } from "notistack";
 
 const CustomToolbar = () => (
     <GridToolbarContainer>
@@ -16,7 +18,8 @@ const CustomToolbar = () => (
     </GridToolbarContainer>
 );
 
-const ExpensesList = ({ expenses, onDelete }) => {
+const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
+    const { enqueueSnackbar } = useSnackbar();
     const [categories, setCategories] = useState([]);
 
     useEffect(() => {
@@ -52,10 +55,36 @@ const ExpensesList = ({ expenses, onDelete }) => {
             };
 
             await updateExpense(updatedRow.id, updatedPayload);
+            enqueueSnackbar("Expense updated", { variant: "success" });
+            refreshExpenses();
             return updatedRow;
         } catch (err) {
             console.error("Failed to update row:", err);
+            enqueueSnackbar("Failed to update expense", { variant: "error" });
             return oldRow;
+        }
+    };
+
+    const handleUndo = async () => {
+        try {
+            await undo();
+            console.log("Calling refreshExpenses after undo"); // ✅ Add this
+            refreshExpenses();
+            enqueueSnackbar("Undo successful", { variant: "success" });
+        } catch (err) {
+            enqueueSnackbar("Undo failed", { variant: "error" });
+            console.error(err);
+        }
+    };
+
+    const handleRedo = async () => {
+        try {
+            await redo();
+            refreshExpenses();
+            enqueueSnackbar("Redo successful", { variant: "success" });
+        } catch (err) {
+            enqueueSnackbar("Redo failed", { variant: "error" });
+            console.error(err);
         }
     };
 
@@ -132,6 +161,17 @@ const ExpensesList = ({ expenses, onDelete }) => {
             <Typography variant="h6" gutterBottom>
                 All Expenses
             </Typography>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                <Typography variant="subtitle1">Edit or undo your expenses below:</Typography>
+                <Box>
+                    <Button onClick={handleUndo} sx={{ mr: 1 }} variant="outlined">
+                        Undo
+                    </Button>
+                    <Button onClick={handleRedo} variant="outlined">
+                        Redo
+                    </Button>
+                </Box>
+            </Box>
             <DataGrid
                 rows={rows}
                 columns={columns}

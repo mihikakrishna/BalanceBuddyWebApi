@@ -4,7 +4,6 @@ using BalanceBuddyWebApi.Data;
 using BalanceBuddyWebApi.Models;
 using BalanceBuddyWebApi.Services;
 
-
 namespace BalanceBuddyWebApi.Controllers;
 
 [ApiController]
@@ -12,16 +11,16 @@ namespace BalanceBuddyWebApi.Controllers;
 public class ExpensesController : ControllerBase
 {
     private readonly AppDbContext _context;
-
     private readonly UndoManager _undo;
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
-    public ExpensesController(AppDbContext context, UndoManager undo)
+    public ExpensesController(AppDbContext context, UndoManager undo, IDbContextFactory<AppDbContext> contextFactory)
     {
         _context = context;
         _undo = undo;
+        _contextFactory = contextFactory;
     }
 
-    // GET: api/expenses
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Expense>>> GetExpenses()
     {
@@ -31,7 +30,6 @@ public class ExpensesController : ControllerBase
             .ToListAsync();
     }
 
-    // GET: api/expenses/5
     [HttpGet("{id}")]
     public async Task<ActionResult<Expense>> GetExpense(int id)
     {
@@ -45,12 +43,9 @@ public class ExpensesController : ControllerBase
         return expense;
     }
 
-    // POST: api/expenses
     [HttpPost]
     public async Task<ActionResult<Expense>> PostExpense(Expense expense)
     {
-        // Assign default category if invalid
-        // Validate or default category
         if (!_context.ExpenseCategories.Any(c => c.Id == expense.CategoryId))
         {
             expense.CategoryId = _context.ExpenseCategories
@@ -60,31 +55,31 @@ public class ExpensesController : ControllerBase
         _context.Expenses.Add(expense);
         await _context.SaveChangesAsync();
 
-        // Capture ID to reuse for undo
         int newId = expense.Id;
 
         _undo.Push(new TransactionOperation
         {
             Undo = () =>
             {
-                var existing = _context.Expenses.Find(newId);
+                using var ctx = _contextFactory.CreateDbContext();
+                var existing = ctx.Expenses.Find(newId);
                 if (existing != null)
                 {
-                    _context.Expenses.Remove(existing);
-                    _context.SaveChanges();
+                    ctx.Expenses.Remove(existing);
+                    ctx.SaveChanges();
                 }
             },
             Redo = () =>
             {
-                _context.Expenses.Add(expense);
-                _context.SaveChanges();
+                using var ctx = _contextFactory.CreateDbContext();
+                ctx.Expenses.Add(expense);
+                ctx.SaveChanges();
             }
         });
 
         return CreatedAtAction(nameof(GetExpense), new { id = expense.Id }, expense);
     }
 
-    // PUT: api/expenses/5
     [HttpPut("{id}")]
     public async Task<IActionResult> PutExpense(int id, Expense updatedExpense)
     {
@@ -93,18 +88,23 @@ public class ExpensesController : ControllerBase
             return BadRequest("Expense ID mismatch.");
         }
 
-        var existing = await _context.Expenses.FindAsync(id);
+        var existing = await _context.Expenses.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
         if (existing == null)
         {
             return NotFound();
         }
 
-        // Update properties
-        existing.Amount = updatedExpense.Amount;
-        existing.Date = updatedExpense.Date;
-        existing.Description = updatedExpense.Description;
-        existing.CategoryId = updatedExpense.CategoryId;
-        existing.BankIconPath = updatedExpense.BankIconPath;
+        var originalExpense = new Expense
+        {
+            Id = existing.Id,
+            Amount = existing.Amount,
+            Date = existing.Date,
+            Description = existing.Description,
+            CategoryId = existing.CategoryId,
+            BankIconPath = existing.BankIconPath
+        };
+
+        _context.Entry(updatedExpense).State = EntityState.Modified;
 
         try
         {
@@ -113,21 +113,30 @@ public class ExpensesController : ControllerBase
         catch (DbUpdateConcurrencyException)
         {
             if (!_context.Expenses.Any(e => e.Id == id))
-            {
                 return NotFound();
-            }
             else
-            {
                 throw;
-            }
         }
+
+        _undo.Push(new TransactionOperation
+        {
+            Undo = () =>
+            {
+                using var ctx = _contextFactory.CreateDbContext();
+                ctx.Entry(originalExpense).State = EntityState.Modified;
+                ctx.SaveChanges();
+            },
+            Redo = () =>
+            {
+                using var ctx = _contextFactory.CreateDbContext();
+                ctx.Entry(updatedExpense).State = EntityState.Modified;
+                ctx.SaveChanges();
+            }
+        });
 
         return NoContent();
     }
 
-
-
-    // DELETE: api/expenses/5
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteExpense(int id)
     {
@@ -145,21 +154,26 @@ public class ExpensesController : ControllerBase
         {
             Undo = () =>
             {
-                _context.Expenses.Add(expense);
-                _context.SaveChanges();
+                using var ctx = _contextFactory.CreateDbContext();
+
+                // Set category to null, just use FK
+                expense.Category = null;
+
+                ctx.Expenses.Add(expense);
+                ctx.SaveChanges();
             },
             Redo = () =>
             {
-                var toDelete = _context.Expenses.Find(id);
+                using var ctx = _contextFactory.CreateDbContext();
+                var toDelete = ctx.Expenses.Find(id);
                 if (toDelete != null)
                 {
-                    _context.Expenses.Remove(toDelete);
-                    _context.SaveChanges();
+                    ctx.Expenses.Remove(toDelete);
+                    ctx.SaveChanges();
                 }
             }
         });
 
         return NoContent();
     }
-
 }

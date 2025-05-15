@@ -1,4 +1,4 @@
-using BalanceBuddyWebApi.Data;
+﻿using BalanceBuddyWebApi.Data;
 using BalanceBuddyWebApi.Services;
 using Microsoft.EntityFrameworkCore;
 using BalanceBuddyWebApi.Services.Parsers;
@@ -10,7 +10,19 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// ✅ First, register DbContext
+// Add EF Core with factory support (safe for singleton)
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
+    options.UseSqlite("Data Source=balancebuddy.db"));
+
 builder.Services.AddSingleton<UndoManager>();
+
+// ✅ Then register DbContextFactory for safe usage in singleton
+builder.Services.AddDbContextFactory<AppDbContext>();
+builder.Services.AddSingleton<UndoManager>();
+
+// ✅ Register statement parsers
 builder.Services.AddScoped<IBankStatementParser, WellsFargoParser>();
 builder.Services.AddScoped<IBankStatementParser, ChaseParser>();
 builder.Services.AddScoped<IBankStatementParser, AmericanExpressParser>();
@@ -19,16 +31,14 @@ builder.Services.AddScoped<IBankStatementParser, CapitalOneCreditParser>();
 builder.Services.AddScoped<IBankStatementParser, CapitalOneSavingsParser>();
 builder.Services.AddScoped<BankStatementParserRegistry>();
 
-
-// Add SQLite
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite("Data Source=balancebuddy.db")); // Use existing or new .db
-
 var app = builder.Build();
 
+// ✅ Scoped context use for migration and seeding
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+    using var db = factory.CreateDbContext();
+
     db.Database.Migrate();
 
     if (!db.ExpenseCategories.Any(c => c.Name == "Unreviewed"))
@@ -40,13 +50,6 @@ using (var scope = app.Services.CreateScope())
         });
         db.SaveChanges();
     }
-
-    var categories = db.ExpenseCategories.ToList();
-    Debug.WriteLine("=== Expense Categories in DB ===");
-    foreach (var cat in categories)
-    {
-        Debug.WriteLine($"ID: {cat.Id}, Name: {cat.Name}, Budget: {cat.Budget}");
-    }
 }
 
 if (app.Environment.IsDevelopment())
@@ -56,7 +59,5 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();

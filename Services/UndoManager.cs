@@ -1,4 +1,6 @@
-﻿using BalanceBuddyWebApi.Models;
+﻿using BalanceBuddyWebApi.Data;
+using BalanceBuddyWebApi.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace BalanceBuddyWebApi.Services;
 
@@ -12,6 +14,12 @@ public class UndoManager
 {
     private readonly Stack<TransactionOperation> _undoStack = new();
     private readonly Stack<TransactionOperation> _redoStack = new();
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
+
+    public UndoManager(IDbContextFactory<AppDbContext> contextFactory)
+    {
+        _contextFactory = contextFactory;
+    }
 
     public void Push(TransactionOperation op)
     {
@@ -23,6 +31,7 @@ public class UndoManager
     {
         if (_undoStack.TryPop(out var op))
         {
+            using var db = _contextFactory.CreateDbContext();
             op.Undo();
             _redoStack.Push(op);
         }
@@ -32,6 +41,7 @@ public class UndoManager
     {
         if (_redoStack.TryPop(out var op))
         {
+            using var db = _contextFactory.CreateDbContext();
             op.Redo();
             _undoStack.Push(op);
         }
