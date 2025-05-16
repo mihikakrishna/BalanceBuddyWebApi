@@ -68,7 +68,7 @@ public class CapitalOneCreditParser : IBankStatementParser
                     Date = record.Date,
                     Description = record.Description,
                     CategoryId = defaultExpenseCategory.Id,
-                    BankIconPath = "/images/CapitalOneCreditLogo.jpg"
+                    BankIconPath = "/Images/CapitalOneCreditLogo.jpg"
                 });
             }
             else if (record.Credit is > 0)
@@ -79,7 +79,7 @@ public class CapitalOneCreditParser : IBankStatementParser
                     Date = record.Date,
                     Description = record.Description,
                     CategoryId = defaultIncomeCategory.Id,
-                    BankIconPath = "/images/CapitalOneCreditLogo.jpg"
+                    BankIconPath = "/Images/CapitalOneCreditLogo.jpg"
                 });
             }
         }

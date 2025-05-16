@@ -70,7 +70,7 @@ public class BankOfAmericaParser : IBankStatementParser
                     Date = record.Date,
                     Description = record.Description,
                     CategoryId = defaultExpenseCategory?.Id ?? 0,
-                    BankIconPath = "/images/BankOfAmericaLogo.png"
+                    BankIconPath = "/Images/BankOfAmericaLogo.png"
                 };
                 _context.Expenses.Add(expense);
             }
@@ -82,7 +82,7 @@ public class BankOfAmericaParser : IBankStatementParser
                     Date = record.Date,
                     Description = record.Description,
                     CategoryId = defaultIncomeCategory?.Id ?? 0,
-                    BankIconPath = "/images/BankOfAmericaLogo.png"
+                    BankIconPath = "/Images/BankOfAmericaLogo.png"
                 };
                 _context.Incomes.Add(income);
             }

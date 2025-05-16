@@ -72,7 +72,7 @@ public class AmericanExpressParser : IBankStatementParser
                     Date = record.Date,
                     Description = record.Description,
                     CategoryId = defaultExpenseCategory?.Id ?? 0,
-                    BankIconPath = "/images/AmericanExpressLogo.png"
+                    BankIconPath = "/Images/AmericanExpressLogo.png"
                 };
                 _context.Expenses.Add(expense);
             }
@@ -84,7 +84,7 @@ public class AmericanExpressParser : IBankStatementParser
                     Date = record.Date,
                     Description = record.Description,
                     CategoryId = defaultIncomeCategory?.Id ?? 0,
-                    BankIconPath = "/images/AmericanExpressLogo.png"
+                    BankIconPath = "/Images/AmericanExpressLogo.png"
                 };
                 _context.Incomes.Add(income);
             }

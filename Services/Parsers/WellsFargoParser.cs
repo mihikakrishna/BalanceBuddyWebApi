@@ -71,7 +71,7 @@ public class WellsFargoParser : IBankStatementParser
                     Date = record.Date,
                     Description = record.Description,
                     CategoryId = defaultExpenseCategory?.Id ?? 0,
-                    BankIconPath = "/images/WellsFargoLogo.png"
+                    BankIconPath = "/Images/WellsFargoLogo.png"
                 };
                 _context.Expenses.Add(expense);
             }
@@ -83,7 +83,7 @@ public class WellsFargoParser : IBankStatementParser
                     Date = record.Date,
                     Description = record.Description,
                     CategoryId = defaultIncomeCategory?.Id ?? 0,
-                    BankIconPath = "/images/WellsFargoLogo.png"
+                    BankIconPath = "/Images/WellsFargoLogo.png"
                 };
                 _context.Incomes.Add(income);
             }

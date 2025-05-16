@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using BalanceBuddyWebApi.Data;
+﻿using BalanceBuddyWebApi.Data;
 using BalanceBuddyWebApi.Models;
 using BalanceBuddyWebApi.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace BalanceBuddyWebApi.Controllers;
 
@@ -10,166 +10,141 @@ namespace BalanceBuddyWebApi.Controllers;
 [Route("api/[controller]")]
 public class ExpensesController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly DatabaseService _dbSvc;          // ← singleton that knows “current” DB
     private readonly UndoManager _undo;
-    private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
-    public ExpensesController(AppDbContext context, UndoManager undo, IDbContextFactory<AppDbContext> contextFactory)
+    public ExpensesController(DatabaseService dbSvc, UndoManager undo)
     {
-        _context = context;
+        _dbSvc = dbSvc;
         _undo = undo;
-        _contextFactory = contextFactory;
     }
+
+    /* ───────────────────────── READ ───────────────────────── */
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Expense>>> GetExpenses()
     {
-        return await _context.Expenses
-            .Include(e => e.Category)
-            .OrderByDescending(e => e.Date)
-            .ToListAsync();
+        await using var ctx = _dbSvc.CreateDbContext();
+        var list = await ctx.Expenses
+                            .Include(e => e.Category)
+                            .OrderByDescending(e => e.Date)
+                            .ToListAsync();
+        return list;
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     public async Task<ActionResult<Expense>> GetExpense(int id)
     {
-        var expense = await _context.Expenses
-            .Include(e => e.Category)
-            .FirstOrDefaultAsync(e => e.Id == id);
-
-        if (expense == null)
-            return NotFound();
-
-        return expense;
+        await using var ctx = _dbSvc.CreateDbContext();
+        var exp = await ctx.Expenses.Include(e => e.Category)
+                                    .FirstOrDefaultAsync(e => e.Id == id);
+        return exp is null ? NotFound() : exp;
     }
+
+    /* ───────────────────────── CREATE ───────────────────────── */
 
     [HttpPost]
     public async Task<ActionResult<Expense>> PostExpense(Expense expense)
     {
-        if (!_context.ExpenseCategories.Any(c => c.Id == expense.CategoryId))
+        await using var ctx = _dbSvc.CreateDbContext();
+
+        if (!ctx.ExpenseCategories.Any(c => c.Id == expense.CategoryId))
         {
-            expense.CategoryId = _context.ExpenseCategories
-                .FirstOrDefault(c => c.Name == "Unreviewed")?.Id ?? 0;
+            expense.CategoryId = ctx.ExpenseCategories
+                                    .First(c => c.Name == "Unreviewed").Id;
         }
 
-        _context.Expenses.Add(expense);
-        await _context.SaveChangesAsync();
-
+        ctx.Expenses.Add(expense);
+        await ctx.SaveChangesAsync();
         int newId = expense.Id;
 
         _undo.Push(new TransactionOperation
         {
             Undo = () =>
             {
-                using var ctx = _contextFactory.CreateDbContext();
-                var existing = ctx.Expenses.Find(newId);
+                using var uCtx = _dbSvc.CreateDbContext();
+                var existing = uCtx.Expenses.Find(newId);
                 if (existing != null)
                 {
-                    ctx.Expenses.Remove(existing);
-                    ctx.SaveChanges();
+                    uCtx.Expenses.Remove(existing);
+                    uCtx.SaveChanges();
                 }
             },
             Redo = () =>
             {
-                using var ctx = _contextFactory.CreateDbContext();
-                ctx.Expenses.Add(expense);
-                ctx.SaveChanges();
+                using var rCtx = _dbSvc.CreateDbContext();
+                rCtx.Expenses.Add(expense);
+                rCtx.SaveChanges();
             }
         });
 
-        return CreatedAtAction(nameof(GetExpense), new { id = expense.Id }, expense);
+        return CreatedAtAction(nameof(GetExpense), new { id = newId }, expense);
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> PutExpense(int id, Expense updatedExpense)
+    /* ───────────────────────── UPDATE ───────────────────────── */
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> PutExpense(int id, Expense updated)
     {
-        if (id != updatedExpense.Id)
-        {
-            return BadRequest("Expense ID mismatch.");
-        }
+        if (id != updated.Id) return BadRequest("ID mismatch");
 
-        var existing = await _context.Expenses.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
-        if (existing == null)
-        {
-            return NotFound();
-        }
+        await using var ctx = _dbSvc.CreateDbContext();
+        var original = await ctx.Expenses.AsNoTracking()
+                                         .FirstOrDefaultAsync(e => e.Id == id);
+        if (original == null) return NotFound();
 
-        var originalExpense = new Expense
-        {
-            Id = existing.Id,
-            Amount = existing.Amount,
-            Date = existing.Date,
-            Description = existing.Description,
-            CategoryId = existing.CategoryId,
-            BankIconPath = existing.BankIconPath
-        };
-
-        _context.Entry(updatedExpense).State = EntityState.Modified;
-
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!_context.Expenses.Any(e => e.Id == id))
-                return NotFound();
-            else
-                throw;
-        }
+        ctx.Entry(updated).State = EntityState.Modified;
+        await ctx.SaveChangesAsync();
 
         _undo.Push(new TransactionOperation
         {
             Undo = () =>
             {
-                using var ctx = _contextFactory.CreateDbContext();
-                ctx.Entry(originalExpense).State = EntityState.Modified;
-                ctx.SaveChanges();
+                using var uCtx = _dbSvc.CreateDbContext();
+                uCtx.Entry(original).State = EntityState.Modified;
+                uCtx.SaveChanges();
             },
             Redo = () =>
             {
-                using var ctx = _contextFactory.CreateDbContext();
-                ctx.Entry(updatedExpense).State = EntityState.Modified;
-                ctx.SaveChanges();
+                using var rCtx = _dbSvc.CreateDbContext();
+                rCtx.Entry(updated).State = EntityState.Modified;
+                rCtx.SaveChanges();
             }
         });
 
         return NoContent();
     }
 
-    [HttpDelete("{id}")]
+    /* ───────────────────────── DELETE ───────────────────────── */
+
+    [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteExpense(int id)
     {
-        var expense = await _context.Expenses
-            .Include(e => e.Category)
-            .FirstOrDefaultAsync(e => e.Id == id);
+        await using var ctx = _dbSvc.CreateDbContext();
+        var exp = await ctx.Expenses.Include(e => e.Category)
+                                    .FirstOrDefaultAsync(e => e.Id == id);
+        if (exp == null) return NotFound();
 
-        if (expense == null)
-            return NotFound();
-
-        _context.Expenses.Remove(expense);
-        await _context.SaveChangesAsync();
+        ctx.Expenses.Remove(exp);
+        await ctx.SaveChangesAsync();
 
         _undo.Push(new TransactionOperation
         {
             Undo = () =>
             {
-                using var ctx = _contextFactory.CreateDbContext();
-
-                // Set category to null, just use FK
-                expense.Category = null;
-
-                ctx.Expenses.Add(expense);
-                ctx.SaveChanges();
+                using var uCtx = _dbSvc.CreateDbContext();
+                exp.Category = null;                  // keep FK only
+                uCtx.Expenses.Add(exp);
+                uCtx.SaveChanges();
             },
             Redo = () =>
             {
-                using var ctx = _contextFactory.CreateDbContext();
-                var toDelete = ctx.Expenses.Find(id);
-                if (toDelete != null)
+                using var rCtx = _dbSvc.CreateDbContext();
+                var victim = rCtx.Expenses.Find(id);
+                if (victim != null)
                 {
-                    ctx.Expenses.Remove(toDelete);
-                    ctx.SaveChanges();
+                    rCtx.Expenses.Remove(victim);
+                    rCtx.SaveChanges();
                 }
             }
         });

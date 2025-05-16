@@ -21,6 +21,7 @@ import ExpensesPage from "./pages/ExpensesPage";
 import IncomesPage from "./pages/IncomesPage";
 import ImportStatementsPage from "./pages/ImportStatementsPage";
 import SettingsPage from "./pages/SettingsPage";
+import DatabasePage from "./pages/DatabasePage";
 import { getTheme } from "./theme";
 
 function App() {
@@ -48,6 +49,9 @@ function App() {
                             <Typography variant="h6" sx={{ flexGrow: 1 }}>
                                 BalanceBuddy Web
                             </Typography>
+                            <Button color="inherit" component={Link} to="/database">
+                                Database
+                            </Button>
                             <Button color="inherit" component={Link} to="/expenses">
                                 Expenses
                             </Button>
@@ -79,6 +83,7 @@ function App() {
                     >
                         <Container maxWidth="lg">
                             <Routes>
+                                <Route path="/database" element={<DatabasePage />} />
                                 <Route path="/expenses" element={<ExpensesPage />} />
                                 <Route path="/incomes" element={<IncomesPage />} />
                                 <Route path="/import" element={<ImportStatementsPage />} />
