@@ -24,59 +24,49 @@ const IncomeForm = ({ onSubmit }) => {
         date: null,
         description: "",
         amount: "",
-        incomeCategoryId: "",
+        categoryId: "",
     });
 
     const [categories, setCategories] = useState([]);
     const [open, setOpen] = useState(false);
 
+    /* ---------- load categories ---------- */
     useEffect(() => {
-        fetch("/api/incomecategory")
-            .then((res) => {
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                return res.json();
-            })
-            .then((data) => setCategories(data))
-            .catch((err) => console.error("Error loading categories:", err));
+        fetch("/api/incomecategories")
+            .then((r) => r.ok ? r.json() : Promise.reject(r.status))
+            .then(setCategories)
+            .catch((e) => console.error("Error loading income categories:", e));
     }, []);
 
-    const handleChange = (e) => {
+    /* ---------- handlers ---------- */
+    const handleChange = (e) =>
         setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         await onSubmit({
             ...formData,
-            date: formData.date?.toISOString() || "",
+            amount: parseFloat(formData.amount),
+            date: formData.date?.toISOString() ?? "",
         });
-        setFormData({
-            date: null,
-            description: "",
-            amount: "",
-            incomeCategoryId: "",
-        });
+        setFormData({ date: null, description: "", amount: "", categoryId: "" });
         setOpen(false);
     };
 
+    /* ---------- UI ---------- */
     return (
         <Paper
             elevation={3}
             sx={(theme) => ({
-                p: 2,
-                mt: 4,
-                borderRadius: 3,
-                maxWidth: 600,
-                margin: "auto",
+                p: 2, mt: 4, borderRadius: 3, maxWidth: 600, mx: "auto",
                 backgroundColor:
                     theme.palette.mode === "dark"
-                        ? "rgba(255, 255, 255, 0)"
-                        : "rgba(255, 255, 255, 0.7)",
+                        ? "rgba(255,255,255,0.05)"
+                        : "rgba(255,255,255,0.7)",
                 backdropFilter: "blur(10px)",
-                color: theme.palette.text.primary,
             })}
         >
-            <Box display="flex" alignItems="center" justifyContent="space-between">
+            <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography variant="h6">Add New Income</Typography>
                 <IconButton onClick={() => setOpen(!open)}>
                     {open ? <RemoveIcon /> : <AddIcon />}
@@ -94,12 +84,8 @@ const IncomeForm = ({ onSubmit }) => {
                         <DatePicker
                             label="Date"
                             value={formData.date}
-                            onChange={(newValue) =>
-                                setFormData({ ...formData, date: newValue })
-                            }
-                            renderInput={(params) => (
-                                <TextField {...params} required fullWidth />
-                            )}
+                            onChange={(v) => setFormData({ ...formData, date: v })}
+                            renderInput={(p) => <TextField {...p} required fullWidth />}
                         />
                         <TextField
                             label="Description"
@@ -120,27 +106,26 @@ const IncomeForm = ({ onSubmit }) => {
                             fullWidth
                         />
                         <FormControl required fullWidth>
-                            <InputLabel id="category-label">Category</InputLabel>
+                            <InputLabel id="income-cat-label">Category</InputLabel>
                             <Select
-                                labelId="category-label"
-                                name="incomeCategoryId"
-                                value={formData.incomeCategoryId}
+                                labelId="income-cat-label"
+                                name="categoryId"
+                                value={formData.categoryId}
                                 label="Category"
                                 onChange={handleChange}
                             >
                                 <MenuItem value="">
                                     <em>Select Category</em>
                                 </MenuItem>
-                                {categories.map((cat) => (
-                                    <MenuItem key={cat.id} value={cat.id}>
-                                        {cat.name}
+                                {categories.map((c) => (
+                                    <MenuItem key={c.id} value={c.id}>
+                                        {c.name}
                                     </MenuItem>
                                 ))}
                             </Select>
                         </FormControl>
                         <Button
                             variant="contained"
-                            color="primary"
                             type="submit"
                             sx={{ alignSelf: "flex-end" }}
                         >

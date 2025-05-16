@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using BalanceBuddyWebApi.Data;
+﻿using BalanceBuddyWebApi.Data;
 using BalanceBuddyWebApi.Models;
+using BalanceBuddyWebApi.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace BalanceBuddyWebApi.Controllers;
 
@@ -9,60 +10,144 @@ namespace BalanceBuddyWebApi.Controllers;
 [Route("api/[controller]")]
 public class IncomesController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly DatabaseService _dbSvc;
+    private readonly UndoManager _undo;
 
-    public IncomesController(AppDbContext context)
+    public IncomesController(DatabaseService dbSvc, UndoManager undo)
     {
-        _context = context;
+        _dbSvc = dbSvc;
+        _undo = undo;
     }
+
+    /* ─────────────── READ ─────────────── */
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Income>>> GetIncomes()
     {
-        return await _context.Incomes
-            .Include(i => i.Category)
-            .OrderByDescending(i => i.Date)
-            .ToListAsync();
+        await using var ctx = _dbSvc.CreateDbContext();
+        var list = await ctx.Incomes
+                            .Include(i => i.Category)
+                            .OrderByDescending(i => i.Date)
+                            .ToListAsync();
+        return list;
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     public async Task<ActionResult<Income>> GetIncome(int id)
     {
-        var income = await _context.Incomes
-            .Include(i => i.Category)
-            .FirstOrDefaultAsync(i => i.Id == id);
-
-        if (income == null)
-            return NotFound();
-
-        return income;
+        await using var ctx = _dbSvc.CreateDbContext();
+        var inc = await ctx.Incomes.Include(i => i.Category)
+                                   .FirstOrDefaultAsync(i => i.Id == id);
+        return inc is null ? NotFound() : inc;
     }
+
+    /* ─────────────── CREATE ─────────────── */
 
     [HttpPost]
     public async Task<ActionResult<Income>> PostIncome(Income income)
     {
-        // Default to "Unreviewed" if CategoryId is invalid
-        if (!_context.IncomeCategories.Any(c => c.Id == income.CategoryId))
+        await using var ctx = _dbSvc.CreateDbContext();
+
+        if (!ctx.IncomeCategories.Any(c => c.Id == income.CategoryId))
         {
-            income.CategoryId = _context.IncomeCategories
-                .FirstOrDefault(c => c.Name == "Unreviewed")?.Id ?? 0;
+            income.CategoryId = ctx.IncomeCategories
+                                    .First(c => c.Name == "Unreviewed").Id;
         }
 
-        _context.Incomes.Add(income);
-        await _context.SaveChangesAsync();
+        ctx.Incomes.Add(income);
+        await ctx.SaveChangesAsync();
+        int newId = income.Id;
 
-        return CreatedAtAction(nameof(GetIncome), new { id = income.Id }, income);
+        _undo.Push(new TransactionOperation
+        {
+            Undo = () =>
+            {
+                using var uCtx = _dbSvc.CreateDbContext();
+                var existing = uCtx.Incomes.Find(newId);
+                if (existing != null)
+                {
+                    uCtx.Incomes.Remove(existing);
+                    uCtx.SaveChanges();
+                }
+            },
+            Redo = () =>
+            {
+                using var rCtx = _dbSvc.CreateDbContext();
+                rCtx.Incomes.Add(income);
+                rCtx.SaveChanges();
+            }
+        });
+
+        return CreatedAtAction(nameof(GetIncome), new { id = newId }, income);
     }
 
-    [HttpDelete("{id}")]
+    /* ─────────────── UPDATE ─────────────── */
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> PutIncome(int id, Income updated)
+    {
+        if (id != updated.Id) return BadRequest("ID mismatch");
+
+        await using var ctx = _dbSvc.CreateDbContext();
+        var original = await ctx.Incomes.AsNoTracking()
+                                        .FirstOrDefaultAsync(i => i.Id == id);
+        if (original == null) return NotFound();
+
+        ctx.Entry(updated).State = EntityState.Modified;
+        await ctx.SaveChangesAsync();
+
+        _undo.Push(new TransactionOperation
+        {
+            Undo = () =>
+            {
+                using var uCtx = _dbSvc.CreateDbContext();
+                uCtx.Entry(original).State = EntityState.Modified;
+                uCtx.SaveChanges();
+            },
+            Redo = () =>
+            {
+                using var rCtx = _dbSvc.CreateDbContext();
+                rCtx.Entry(updated).State = EntityState.Modified;
+                rCtx.SaveChanges();
+            }
+        });
+
+        return NoContent();
+    }
+
+    /* ─────────────── DELETE ─────────────── */
+
+    [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteIncome(int id)
     {
-        var income = await _context.Incomes.FindAsync(id);
-        if (income == null)
-            return NotFound();
+        await using var ctx = _dbSvc.CreateDbContext();
+        var inc = await ctx.Incomes.Include(i => i.Category)
+                                   .FirstOrDefaultAsync(i => i.Id == id);
+        if (inc == null) return NotFound();
 
-        _context.Incomes.Remove(income);
-        await _context.SaveChangesAsync();
+        ctx.Incomes.Remove(inc);
+        await ctx.SaveChangesAsync();
+
+        _undo.Push(new TransactionOperation
+        {
+            Undo = () =>
+            {
+                using var uCtx = _dbSvc.CreateDbContext();
+                inc.Category = null;
+                uCtx.Incomes.Add(inc);
+                uCtx.SaveChanges();
+            },
+            Redo = () =>
+            {
+                using var rCtx = _dbSvc.CreateDbContext();
+                var victim = rCtx.Incomes.Find(id);
+                if (victim != null)
+                {
+                    rCtx.Incomes.Remove(victim);
+                    rCtx.SaveChanges();
+                }
+            }
+        });
 
         return NoContent();
     }

@@ -10,7 +10,7 @@ namespace BalanceBuddyWebApi.Controllers;
 [Route("api/[controller]")]
 public class ExpensesController : ControllerBase
 {
-    private readonly DatabaseService _dbSvc;          // ← singleton that knows “current” DB
+    private readonly DatabaseService _dbSvc;
     private readonly UndoManager _undo;
 
     public ExpensesController(DatabaseService dbSvc, UndoManager undo)
@@ -133,7 +133,7 @@ public class ExpensesController : ControllerBase
             Undo = () =>
             {
                 using var uCtx = _dbSvc.CreateDbContext();
-                exp.Category = null;                  // keep FK only
+                exp.Category = null;
                 uCtx.Expenses.Add(exp);
                 uCtx.SaveChanges();
             },

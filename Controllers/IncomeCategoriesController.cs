@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BalanceBuddyWebApi.Models;
+using BalanceBuddyWebApi.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using BalanceBuddyWebApi.Data;
-using BalanceBuddyWebApi.Models;
 
 namespace BalanceBuddyWebApi.Controllers;
 
@@ -9,36 +9,39 @@ namespace BalanceBuddyWebApi.Controllers;
 [Route("api/[controller]")]
 public class IncomeCategoriesController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly DatabaseService _dbSvc;
 
-    public IncomeCategoriesController(AppDbContext context)
+    public IncomeCategoriesController(DatabaseService dbSvc)
     {
-        _context = context;
+        _dbSvc = dbSvc;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<IncomeCategory>>> GetCategories()
     {
-        return await _context.IncomeCategories.ToListAsync();
+        await using var ctx = _dbSvc.CreateDbContext();
+        return await ctx.IncomeCategories.ToListAsync();
     }
 
     [HttpPost]
     public async Task<ActionResult<IncomeCategory>> PostCategory(IncomeCategory category)
     {
-        _context.IncomeCategories.Add(category);
-        await _context.SaveChangesAsync();
+        await using var ctx = _dbSvc.CreateDbContext();
+        ctx.IncomeCategories.Add(category);
+        await ctx.SaveChangesAsync();
         return CreatedAtAction(nameof(GetCategories), new { id = category.Id }, category);
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteCategory(int id)
     {
-        var category = await _context.IncomeCategories.FindAsync(id);
+        await using var ctx = _dbSvc.CreateDbContext();
+        var category = await ctx.IncomeCategories.FindAsync(id);
         if (category == null || category.Name == "Unreviewed")
             return BadRequest("Cannot delete default or missing category");
 
-        _context.IncomeCategories.Remove(category);
-        await _context.SaveChangesAsync();
+        ctx.IncomeCategories.Remove(category);
+        await ctx.SaveChangesAsync();
         return NoContent();
     }
 }

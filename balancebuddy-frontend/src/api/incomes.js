@@ -1,48 +1,44 @@
-﻿/* eslint-disable no-unused-vars */
-const BASE_URL = "/api/incomes";
+﻿const BASE_URL = "/api/incomes";
+const toNumber = (v) => (v === "" || v == null ? 0 : parseFloat(v));
 
 export async function fetchIncomes() {
     const res = await fetch(BASE_URL);
     if (!res.ok) throw new Error("Failed to fetch incomes");
-    return await res.json();
+    return res.json();
 }
 
 export async function createIncome(income) {
-    const { id, category, amount, incomeCategoryId, ...rest } = income;
-    const safeIncome = {
-        ...rest,
-        amount: parseFloat(amount || "0"),
-        incomeCategoryId: parseInt(incomeCategoryId || "0")
-    };
+    const {
+        id, category, incomeCategoryId, categoryId = incomeCategoryId, ...rest
+    } = income;
 
-    console.log("Creating with payload:", safeIncome);
+    const payload = {
+        ...rest,
+        amount: toNumber(income.amount),
+        categoryId: parseInt(categoryId || 0, 10),
+    };
 
     const res = await fetch(BASE_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(safeIncome),
+        body: JSON.stringify(payload),
     });
-
     if (!res.ok) throw new Error("Failed to create income");
-    return await res.json();
+    return res.json();
 }
 
-export async function updateIncome(id, updatedIncome) {
+export async function updateIncome(id, income) {
     const res = await fetch(`${BASE_URL}/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedIncome),
+        body: JSON.stringify(income),
     });
-
     if (!res.ok) throw new Error("Failed to update income");
-
-    const text = await res.text();
-    return text ? JSON.parse(text) : null;
+    if (res.status === 204) return null;
+    return res.json();
 }
 
 export async function deleteIncome(id) {
-    const res = await fetch(`${BASE_URL}/${id}`, {
-        method: "DELETE",
-    });
+    const res = await fetch(`${BASE_URL}/${id}`, { method: "DELETE" });
     if (!res.ok) throw new Error("Failed to delete income");
 }

@@ -74,7 +74,7 @@ public class CapitalOneSavingsParser : IBankStatementParser
                     Date = record.Date,
                     Description = record.Description,
                     CategoryId = defaultExpenseCategory?.Id ?? 0,
-                    BankIconPath = "/Images/CapitalOneSavingsLogo.png"
+                    BankIconPath = "/Images/CapitalOneSavingsLogo.jpg"
                 };
                 _context.Expenses.Add(expense);
             }
@@ -86,7 +86,7 @@ public class CapitalOneSavingsParser : IBankStatementParser
                     Date = record.Date,
                     Description = record.Description,
                     CategoryId = defaultIncomeCategory?.Id ?? 0,
-                    BankIconPath = "/Images/CapitalOneSavingsLogo.png"
+                    BankIconPath = "/Images/CapitalOneSavingsLogo.jpg"
                 };
                 _context.Incomes.Add(income);
             }
