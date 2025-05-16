@@ -1,5 +1,4 @@
-﻿// Models/IncomeCategory.cs
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 namespace BalanceBuddyWebApi.Models;
 
 public class IncomeCategory

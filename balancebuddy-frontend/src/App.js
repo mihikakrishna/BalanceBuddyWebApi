@@ -22,6 +22,7 @@ import IncomesPage from "./pages/IncomesPage";
 import ImportStatementsPage from "./pages/ImportStatementsPage";
 import SettingsPage from "./pages/SettingsPage";
 import DatabasePage from "./pages/DatabasePage";
+import Dashboard from "./pages/Dashboard";
 import { getTheme } from "./theme";
 
 function App() {
@@ -51,6 +52,9 @@ function App() {
                             </Typography>
                             <Button color="inherit" component={Link} to="/database">
                                 Database
+                            </Button>
+                            <Button color="inherit" component={Link} to="/dashboard">
+                                Dashboard
                             </Button>
                             <Button color="inherit" component={Link} to="/expenses">
                                 Expenses
@@ -84,6 +88,7 @@ function App() {
                         <Container maxWidth="lg">
                             <Routes>
                                 <Route path="/database" element={<DatabasePage />} />
+                                <Route path="/dashboard" element={<Dashboard />} />
                                 <Route path="/expenses" element={<ExpensesPage />} />
                                 <Route path="/incomes" element={<IncomesPage />} />
                                 <Route path="/import" element={<ImportStatementsPage />} />
