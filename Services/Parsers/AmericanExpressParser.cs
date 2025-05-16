@@ -45,8 +45,22 @@ public class AmericanExpressParser : IBankStatementParser
 
         var records = csv.GetRecords<AmericanExpressStatementRecord>();
 
-        var defaultExpenseCat = _context.ExpenseCategories.FirstOrDefault(c => c.Name == "Unreviewed");
-        var defaultIncomeCat = _context.IncomeCategories.FirstOrDefault(c => c.Name == "Unreviewed");
+        var defaultExpenseCategory = _context.ExpenseCategories.FirstOrDefault(c => c.Name == "Unreviewed");
+        var defaultIncomeCategory = _context.IncomeCategories.FirstOrDefault(c => c.Name == "Unreviewed");
+
+        if (defaultExpenseCategory == null)
+        {
+            defaultExpenseCategory = new ExpenseCategory { Name = "Unreviewed", Budget = null };
+            _context.ExpenseCategories.Add(defaultExpenseCategory);
+            _context.SaveChanges();
+        }
+
+        if (defaultIncomeCategory == null)
+        {
+            defaultIncomeCategory = new IncomeCategory { Name = "Unreviewed" };
+            _context.IncomeCategories.Add(defaultIncomeCategory);
+            _context.SaveChanges();
+        }
 
         foreach (var record in records)
         {
@@ -57,7 +71,7 @@ public class AmericanExpressParser : IBankStatementParser
                     Amount = record.Amount,
                     Date = record.Date,
                     Description = record.Description,
-                    CategoryId = defaultExpenseCat?.Id ?? 0,
+                    CategoryId = defaultExpenseCategory?.Id ?? 0,
                     BankIconPath = "/images/AmericanExpressLogo.png"
                 };
                 _context.Expenses.Add(expense);
@@ -69,7 +83,7 @@ public class AmericanExpressParser : IBankStatementParser
                     Amount = -record.Amount,
                     Date = record.Date,
                     Description = record.Description,
-                    CategoryId = defaultIncomeCat?.Id ?? 0,
+                    CategoryId = defaultIncomeCategory?.Id ?? 0,
                     BankIconPath = "/images/AmericanExpressLogo.png"
                 };
                 _context.Incomes.Add(income);

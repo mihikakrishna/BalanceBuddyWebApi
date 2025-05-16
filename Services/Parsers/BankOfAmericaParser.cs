@@ -20,49 +20,76 @@ public class BankOfAmericaStatementRecord
     [Index(4)]
     public decimal Amount { get; set; }
 }
-
 public class BankOfAmericaParser : IBankStatementParser
 {
-    public string BankId => "Bank of America";
+    public string BankId => "American Express";
+
     private readonly AppDbContext _context;
-    public BankOfAmericaParser(AppDbContext context) => _context = context;
+
+    public BankOfAmericaParser(AppDbContext context)
+    {
+        _context = context;
+    }
 
     public void ParseStatement(Stream csvStream)
     {
-        var records = new CsvReader(new StreamReader(csvStream), new CsvConfiguration(CultureInfo.InvariantCulture)
+        using var reader = new StreamReader(csvStream);
+        using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
         {
             Delimiter = ",",
-            HasHeaderRecord = true
-        }).GetRecords<BankOfAmericaStatementRecord>();
+            HasHeaderRecord = true,
+            IgnoreBlankLines = true
+        });
 
-        var expenseCatId = _context.ExpenseCategories.FirstOrDefault(c => c.Name == "Unreviewed")?.Id ?? 0;
-        var incomeCatId = _context.IncomeCategories.FirstOrDefault(c => c.Name == "Unreviewed")?.Id ?? 0;
+        var records = csv.GetRecords<BankOfAmericaStatementRecord>();
 
-        foreach (var r in records)
+        var defaultExpenseCategory = _context.ExpenseCategories.FirstOrDefault(c => c.Name == "Unreviewed");
+        var defaultIncomeCategory = _context.IncomeCategories.FirstOrDefault(c => c.Name == "Unreviewed");
+
+        if (defaultExpenseCategory == null)
         {
-            if (r.Amount <= 0)
+            defaultExpenseCategory = new ExpenseCategory { Name = "Unreviewed", Budget = null };
+            _context.ExpenseCategories.Add(defaultExpenseCategory);
+            _context.SaveChanges();
+        }
+
+        if (defaultIncomeCategory == null)
+        {
+            defaultIncomeCategory = new IncomeCategory { Name = "Unreviewed" };
+            _context.IncomeCategories.Add(defaultIncomeCategory);
+            _context.SaveChanges();
+        }
+
+        foreach (var record in records)
+        {
+            if (record.Amount <= 0)
             {
-                _context.Expenses.Add(new Expense
+                var expense = new Expense
                 {
-                    Amount = -r.Amount,
-                    Date = r.Date,
-                    Description = r.Description,
-                    CategoryId = expenseCatId,
+                    Amount = -record.Amount,
+                    Date = record.Date,
+                    Description = record.Description,
+                    CategoryId = defaultExpenseCategory?.Id ?? 0,
                     BankIconPath = "/images/BankOfAmericaLogo.png"
-                });
+                };
+                _context.Expenses.Add(expense);
             }
             else
             {
-                _context.Incomes.Add(new Income
+                var income = new Income
                 {
-                    Amount = r.Amount,
-                    Date = r.Date,
-                    Description = r.Description,
-                    CategoryId = incomeCatId,
+                    Amount = record.Amount,
+                    Date = record.Date,
+                    Description = record.Description,
+                    CategoryId = defaultIncomeCategory?.Id ?? 0,
                     BankIconPath = "/images/BankOfAmericaLogo.png"
-                });
+                };
+                _context.Incomes.Add(income);
             }
         }
+
         _context.SaveChanges();
     }
 }
+
+

@@ -26,49 +26,73 @@ public class CapitalOneSavingsStatementRecord
 
 public class CapitalOneSavingsParser : IBankStatementParser
 {
-    public string BankId => "Capital One Debit/Savings Account";
+    public string BankId => "American Express";
+
     private readonly AppDbContext _context;
 
-    public CapitalOneSavingsParser(AppDbContext context) => _context = context;
+    public CapitalOneSavingsParser(AppDbContext context)
+    {
+        _context = context;
+    }
 
     public void ParseStatement(Stream csvStream)
     {
         using var reader = new StreamReader(csvStream);
         using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
         {
+            Delimiter = ",",
             HasHeaderRecord = true,
             IgnoreBlankLines = true
         });
 
-        var defaultExpenseCatId = _context.ExpenseCategories.FirstOrDefault(c => c.Name == "Unreviewed")?.Id ?? 0;
-        var defaultIncomeCatId = _context.IncomeCategories.FirstOrDefault(c => c.Name == "Unreviewed")?.Id ?? 0;
+        var records = csv.GetRecords<CapitalOneSavingsStatementRecord>();
 
-        foreach (var record in csv.GetRecords<CapitalOneSavingsStatementRecord>())
+        var defaultExpenseCategory = _context.ExpenseCategories.FirstOrDefault(c => c.Name == "Unreviewed");
+        var defaultIncomeCategory = _context.IncomeCategories.FirstOrDefault(c => c.Name == "Unreviewed");
+
+        if (defaultExpenseCategory == null)
+        {
+            defaultExpenseCategory = new ExpenseCategory { Name = "Unreviewed", Budget = null };
+            _context.ExpenseCategories.Add(defaultExpenseCategory);
+            _context.SaveChanges();
+        }
+
+        if (defaultIncomeCategory == null)
+        {
+            defaultIncomeCategory = new IncomeCategory { Name = "Unreviewed" };
+            _context.IncomeCategories.Add(defaultIncomeCategory);
+            _context.SaveChanges();
+        }
+
+        foreach (var record in records)
         {
             if (record.TransactionType.Equals("Debit", StringComparison.OrdinalIgnoreCase))
             {
-                _context.Expenses.Add(new Expense
+                var expense = new Expense
                 {
                     Amount = record.Amount,
                     Date = record.Date,
                     Description = record.Description,
-                    CategoryId = defaultExpenseCatId,
-                    BankIconPath = "/images/CapitalOneSavingsLogo.jpg"
-                });
+                    CategoryId = defaultExpenseCategory?.Id ?? 0,
+                    BankIconPath = "/images/CapitalOneSavingsLogo.png"
+                };
+                _context.Expenses.Add(expense);
             }
             else
             {
-                _context.Incomes.Add(new Income
+                var income = new Income
                 {
                     Amount = record.Amount,
                     Date = record.Date,
                     Description = record.Description,
-                    CategoryId = defaultIncomeCatId,
-                    BankIconPath = "/images/CapitalOneSavingsLogo.jpg"
-                });
+                    CategoryId = defaultIncomeCategory?.Id ?? 0,
+                    BankIconPath = "/images/CapitalOneSavingsLogo.png"
+                };
+                _context.Incomes.Add(income);
             }
         }
 
         _context.SaveChanges();
     }
 }
+

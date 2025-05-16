@@ -23,46 +23,69 @@ public class WellsFargoStatementRecord
 
 public class WellsFargoParser : IBankStatementParser
 {
-    public string BankId => "Wells Fargo";
+    public string BankId => "American Express";
+
     private readonly AppDbContext _context;
 
-    public WellsFargoParser(AppDbContext context) => _context = context;
+    public WellsFargoParser(AppDbContext context)
+    {
+        _context = context;
+    }
 
     public void ParseStatement(Stream csvStream)
     {
         using var reader = new StreamReader(csvStream);
         using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
         {
-            HasHeaderRecord = false,
+            Delimiter = ",",
+            HasHeaderRecord = true,
             IgnoreBlankLines = true
         });
 
-        var defaultExpenseCatId = _context.ExpenseCategories.FirstOrDefault(c => c.Name == "Unreviewed")?.Id ?? 0;
-        var defaultIncomeCatId = _context.IncomeCategories.FirstOrDefault(c => c.Name == "Unreviewed")?.Id ?? 0;
+        var records = csv.GetRecords<WellsFargoStatementRecord>();
 
-        foreach (var record in csv.GetRecords<WellsFargoStatementRecord>())
+        var defaultExpenseCategory = _context.ExpenseCategories.FirstOrDefault(c => c.Name == "Unreviewed");
+        var defaultIncomeCategory = _context.IncomeCategories.FirstOrDefault(c => c.Name == "Unreviewed");
+
+        if (defaultExpenseCategory == null)
+        {
+            defaultExpenseCategory = new ExpenseCategory { Name = "Unreviewed", Budget = null };
+            _context.ExpenseCategories.Add(defaultExpenseCategory);
+            _context.SaveChanges();
+        }
+
+        if (defaultIncomeCategory == null)
+        {
+            defaultIncomeCategory = new IncomeCategory { Name = "Unreviewed" };
+            _context.IncomeCategories.Add(defaultIncomeCategory);
+            _context.SaveChanges();
+        }
+
+        foreach (var record in records)
         {
             if (record.Amount <= 0)
             {
-                _context.Expenses.Add(new Expense
+                var expense = new Expense
                 {
                     Amount = -record.Amount,
                     Date = record.Date,
                     Description = record.Description,
-                    CategoryId = defaultExpenseCatId,
+                    CategoryId = defaultExpenseCategory?.Id ?? 0,
                     BankIconPath = "/images/WellsFargoLogo.png"
-                });
+                };
+                _context.Expenses.Add(expense);
             }
             else
             {
-                _context.Incomes.Add(new Income
+                var income = new Income
                 {
                     Amount = record.Amount,
                     Date = record.Date,
                     Description = record.Description,
-                    CategoryId = defaultIncomeCatId,
+                    CategoryId = defaultIncomeCategory?.Id ?? 0,
                     BankIconPath = "/images/WellsFargoLogo.png"
-                });
+                };
+                _context.Incomes.Add(income);
             }
         }
 

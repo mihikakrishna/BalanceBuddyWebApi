@@ -40,10 +40,25 @@ public class CapitalOneCreditParser : IBankStatementParser
             IgnoreBlankLines = true
         });
 
-        var defaultExpenseCatId = _context.ExpenseCategories.FirstOrDefault(c => c.Name == "Unreviewed")?.Id ?? 0;
-        var defaultIncomeCatId = _context.IncomeCategories.FirstOrDefault(c => c.Name == "Unreviewed")?.Id ?? 0;
+        var records = csv.GetRecords<CapitalOneCreditStatementRecord>();
+        var defaultExpenseCategory = _context.ExpenseCategories.FirstOrDefault(c => c.Name == "Unreviewed");
+        var defaultIncomeCategory = _context.IncomeCategories.FirstOrDefault(c => c.Name == "Unreviewed");
 
-        foreach (var record in csv.GetRecords<CapitalOneCreditStatementRecord>())
+        if (defaultExpenseCategory == null)
+        {
+            defaultExpenseCategory = new ExpenseCategory { Name = "Unreviewed", Budget = null };
+            _context.ExpenseCategories.Add(defaultExpenseCategory);
+            _context.SaveChanges();
+        }
+
+        if (defaultIncomeCategory == null)
+        {
+            defaultIncomeCategory = new IncomeCategory { Name = "Unreviewed"};
+            _context.IncomeCategories.Add(defaultIncomeCategory);
+            _context.SaveChanges();
+        }
+
+        foreach (var record in records)
         {
             if (record.Debit is >= 0)
             {
@@ -52,7 +67,7 @@ public class CapitalOneCreditParser : IBankStatementParser
                     Amount = record.Debit.Value,
                     Date = record.Date,
                     Description = record.Description,
-                    CategoryId = defaultExpenseCatId,
+                    CategoryId = defaultExpenseCategory.Id,
                     BankIconPath = "/images/CapitalOneCreditLogo.jpg"
                 });
             }
@@ -63,7 +78,7 @@ public class CapitalOneCreditParser : IBankStatementParser
                     Amount = record.Credit.Value,
                     Date = record.Date,
                     Description = record.Description,
-                    CategoryId = defaultIncomeCatId,
+                    CategoryId = defaultIncomeCategory.Id,
                     BankIconPath = "/images/CapitalOneCreditLogo.jpg"
                 });
             }
