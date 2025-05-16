@@ -90,6 +90,19 @@ const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
 
     const columns = [
         {
+            field: "bankIconPath",
+            headerName: "Bank",
+            width: 80,
+            renderCell: (params) => {
+                const iconPath = params.row.bankIconPath;
+                return iconPath ? (
+                    <img src={iconPath} alt="Bank Icon" style={{ height: 50, width: 50 }} />
+                ) : (
+                    <span style={{ opacity: 0.3 }}>—</span> // or fallback icon
+                );
+            }
+        },
+        {
             field: "date",
             headerName: "Date",
             width: 150,
