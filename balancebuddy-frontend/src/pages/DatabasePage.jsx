@@ -4,13 +4,13 @@ import {
     Button,
     Card,
     CardContent,
-    CardHeader,
     Divider,
-    Grid,
     LinearProgress,
     MenuItem,
     Select,
     Stack,
+    Tab,
+    Tabs,
     TextField,
     Typography,
 } from "@mui/material";
@@ -20,14 +20,13 @@ import { useSnackbar } from "notistack";
 const DatabasePage = () => {
     const { enqueueSnackbar } = useSnackbar();
 
+    const [tabIndex, setTabIndex] = useState(0);
     const [files, setFiles] = useState([]);
     const [current, setCurrent] = useState("");
     const [selected, setSelected] = useState("");
     const [uploadFile, setUploadFile] = useState(null);
     const [newName, setNewName] = useState("");
     const [busy, setBusy] = useState(false);
-
-    /* ───────── helpers ───────── */
 
     const refresh = async () => {
         const [{ data: list }, { data: cur }] = await Promise.all([
@@ -39,13 +38,9 @@ const DatabasePage = () => {
         setSelected(cur);
     };
 
-    /* ───────── lifecycle ───────── */
-
     useEffect(() => {
         refresh();
     }, []);
-
-    /* ───────── actions ───────── */
 
     const wrap = (fn) => async (...args) => {
         try {
@@ -72,30 +67,21 @@ const DatabasePage = () => {
         await axios.post("/api/database/upload", form, {
             headers: { "Content-Type": "multipart/form-data" },
         });
-        enqueueSnackbar("Uploaded and switched to new database", {
-            variant: "success",
-        });
+        enqueueSnackbar("Uploaded and switched to new database", { variant: "success" });
         setUploadFile(null);
     });
 
     const createDb = wrap(async () => {
         if (!newName.trim()) throw new Error("Enter a file name.");
-        if (!newName.endsWith(".db")) setNewName((n) => (n += ".db"));
-        await axios.post("/api/database/create", { fileName: newName });
-        enqueueSnackbar(`Created "${newName}" and switched.`, {
-            variant: "success",
-        });
+        const fileName = newName.endsWith(".db") ? newName : `${newName}.db`;
+        await axios.post("/api/database/create", { fileName });
+        enqueueSnackbar(`Created "${fileName}" and switched.`, { variant: "success" });
         setNewName("");
     });
 
     const exportDb = wrap(async () => {
-        // opens file download in browser
-        window.location.href =
-            "/api/database/export?fileName=" +
-            encodeURIComponent(`balancebuddy_${Date.now()}.db`);
+        window.location.href = "/api/database/export?fileName=" + encodeURIComponent(`balancebuddy_${Date.now()}.db`);
     });
-
-    /* ───────── UI ───────── */
 
     return (
         <Box>
@@ -105,104 +91,117 @@ const DatabasePage = () => {
 
             {busy && <LinearProgress sx={{ mb: 2 }} />}
 
-            <Grid container spacing={3}>
-                {/* current */}
-                <Grid item xs={12} md={3}>
-                    <Card elevation={3}>
-                        <CardHeader title="Current" />
-                        <Divider />
-                        <CardContent>
-                            <Typography variant="subtitle1" sx={{ wordBreak: "break-all" }}>
-                                {current || "—"}
-                            </Typography>
+            <Tabs value={tabIndex} onChange={(_, newIndex) => setTabIndex(newIndex)} sx={{ mb: 3 }}>
+                <Tab label="Current" />
+                <Tab label="Switch" />
+                <Tab label="Upload" />
+                <Tab label="Create New" />
+            </Tabs>
+
+            {/* Current Tab */}
+            {tabIndex === 0 && (
+                <Card elevation={3}>
+                    <CardContent>
+                        <Typography variant="subtitle1" sx={{ wordBreak: "break-word", mb: 2 }}>
+                            Current Database: <strong>{current || "—"}</strong>
+                        </Typography>
+                        <Button
+                            variant="outlined"
+                            onClick={exportDb}
+                            disabled={busy}
+                        >
+                            Export
+                        </Button>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Switch Tab */}
+            {tabIndex === 1 && (
+                <Card elevation={3}>
+                    <CardContent>
+                        <Stack spacing={2}>
+                            <Select
+                                fullWidth
+                                value={selected}
+                                onChange={(e) => setSelected(e.target.value)}
+                                displayEmpty
+                            >
+                                <MenuItem value="" disabled>Select a .db file</MenuItem>
+                                {files.map((f) => (
+                                    <MenuItem key={f} value={f}>
+                                        {f}
+                                    </MenuItem>
+                                ))}
+                            </Select>
                             <Button
+                                variant="contained"
+                                onClick={switchDb}
+                                disabled={busy || !selected}
+                            >
+                                Switch
+                            </Button>
+                        </Stack>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Upload Tab */}
+            {tabIndex === 2 && (
+                <Card elevation={3}>
+                    <CardContent>
+                        <Stack spacing={2}>
+                            <Button
+                                component="label"
                                 variant="outlined"
-                                size="small"
-                                sx={{ mt: 2 }}
-                                onClick={exportDb}
                                 disabled={busy}
                             >
-                                Export
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </Grid>
-
-                {/* switch */}
-                <Grid item xs={12} md={3}>
-                    <Card elevation={3}>
-                        <CardHeader title="Switch" />
-                        <Divider />
-                        <CardContent>
-                            <Stack spacing={2}>
-                                <Select
-                                    fullWidth
-                                    value={selected}
-                                    displayEmpty
-                                    onChange={(e) => setSelected(e.target.value)}
-                                >
-                                    {files.map((f) => (
-                                        <MenuItem key={f} value={f}>
-                                            {f}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                                <Button variant="contained" onClick={switchDb} disabled={busy}>
-                                    Switch
-                                </Button>
-                            </Stack>
-                        </CardContent>
-                    </Card>
-                </Grid>
-
-                {/* upload */}
-                <Grid item xs={12} md={3}>
-                    <Card elevation={3}>
-                        <CardHeader title="Upload" />
-                        <Divider />
-                        <CardContent>
-                            <Stack spacing={2}>
-                                <TextField
+                                Choose File
+                                <input
                                     type="file"
-                                    inputProps={{ accept: ".db" }}
+                                    hidden
+                                    accept=".db"
                                     onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
                                 />
-                                <Button
-                                    variant="outlined"
-                                    onClick={upload}
-                                    disabled={busy || !uploadFile}
-                                >
-                                    Upload &amp; Use
-                                </Button>
-                            </Stack>
-                        </CardContent>
-                    </Card>
-                </Grid>
+                            </Button>
+                            {uploadFile && (
+                                <Typography variant="body2">{uploadFile.name}</Typography>
+                            )}
+                            <Button
+                                variant="contained"
+                                onClick={upload}
+                                disabled={busy || !uploadFile}
+                            >
+                                Upload & Switch
+                            </Button>
+                        </Stack>
+                    </CardContent>
+                </Card>
+            )}
 
-                {/* create */}
-                <Grid item xs={12} md={3}>
-                    <Card elevation={3}>
-                        <CardHeader title="Create New" />
-                        <Divider />
-                        <CardContent>
-                            <Stack spacing={2}>
-                                <TextField
-                                    placeholder="mydata.db"
-                                    value={newName}
-                                    onChange={(e) => setNewName(e.target.value)}
-                                />
-                                <Button
-                                    variant="outlined"
-                                    onClick={createDb}
-                                    disabled={busy || !newName.trim()}
-                                >
-                                    Create &amp; Use
-                                </Button>
-                            </Stack>
-                        </CardContent>
-                    </Card>
-                </Grid>
-            </Grid>
+            {/* Create Tab */}
+            {tabIndex === 3 && (
+                <Card elevation={3}>
+                    <CardContent>
+                        <Stack direction="row" spacing={2}>
+                            <TextField
+                                fullWidth
+                                placeholder="mydata.db"
+                                value={newName}
+                                onChange={(e) => setNewName(e.target.value)}
+                                disabled={busy}
+                            />
+                            <Button
+                                variant="contained"
+                                onClick={createDb}
+                                disabled={busy || !newName.trim()}
+                            >
+                                Create & Use
+                            </Button>
+                        </Stack>
+                    </CardContent>
+                </Card>
+            )}
         </Box>
     );
 };
