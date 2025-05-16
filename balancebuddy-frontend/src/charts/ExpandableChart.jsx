@@ -7,23 +7,30 @@ import {
     IconButton,
     Box,
     Typography,
+    useTheme,
 } from "@mui/material";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import CloseIcon from "@mui/icons-material/Close";
 
 /**
  * Wraps any chart component so it can expand into a dialog.
+ *
  * Props:
- *   title   – string
- *   height  – css height for the dashboard view (e.g. 320)
- *   children – the <Chart /> element
+ *   title   – heading shown on card and in dialog
+ *   height  – card height (default 320 px)
+ *   children – the chart element to render
  */
 const ExpandableChart = ({ title, height = 320, children }) => {
     const [open, setOpen] = useState(false);
+    const theme = useTheme();
+
+    /* Soft grey panel only in dark mode */
+    const chartBg =
+        theme.palette.mode === "dark" ? "rgba(255,255,255,0.1)" : "transparent";
 
     return (
         <>
-            {/* dashboard card */}
+            {/* ───────── dashboard card ───────── */}
             <Paper
                 elevation={3}
                 sx={{
@@ -37,7 +44,20 @@ const ExpandableChart = ({ title, height = 320, children }) => {
                 <Typography variant="h6" mb={1}>
                     {title}
                 </Typography>
-                <Box sx={{ height }}>{children}</Box>
+
+                <Box
+                    sx={{
+                        height,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: chartBg,
+                        borderRadius: 2,
+                    }}
+                >
+                    {children}
+                </Box>
+
                 <IconButton
                     size="small"
                     sx={{ position: "absolute", top: 8, right: 8 }}
@@ -46,8 +66,13 @@ const ExpandableChart = ({ title, height = 320, children }) => {
                 </IconButton>
             </Paper>
 
-            {/* dialog */}
-            <Dialog open={open} onClose={() => setOpen(false)} maxWidth="xl" fullWidth>
+            {/* ───────── full-width dialog ───────── */}
+            <Dialog
+                open={open}
+                onClose={() => setOpen(false)}
+                maxWidth="xl"
+                fullWidth
+            >
                 <DialogTitle
                     sx={{ m: 0, p: 2, display: "flex", alignItems: "center" }}
                 >
@@ -56,9 +81,21 @@ const ExpandableChart = ({ title, height = 320, children }) => {
                         <CloseIcon />
                     </IconButton>
                 </DialogTitle>
+
                 <DialogContent dividers sx={{ height: "80vh" }}>
-                    {/* 100% height so the chart scales */}
-                    <Box sx={{ height: "100%" }}>{children}</Box>
+                    <Box
+                        sx={{
+                            height: "100%",
+                            width: "100%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            backgroundColor: chartBg,
+                            borderRadius: 2,
+                        }}
+                    >
+                        {children}
+                    </Box>
                 </DialogContent>
             </Dialog>
         </>

@@ -2,6 +2,7 @@
 import { Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import ExpandableChart from "./ExpandableChart";
+import { chartPalette } from "../theme";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -17,14 +18,7 @@ const BankBalancesPie = () => {
                     datasets: [
                         {
                             data: accounts.map((a) => a.balance),
-                            backgroundColor: [
-                                "#4e79a7",
-                                "#f28e2b",
-                                "#e15759",
-                                "#76b7b2",
-                                "#59a14f",
-                                "#edc949",
-                            ],
+                            backgroundColor: chartPalette,
                         },
                     ],
                 })

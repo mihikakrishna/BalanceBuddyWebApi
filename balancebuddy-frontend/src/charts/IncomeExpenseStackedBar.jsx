@@ -9,6 +9,7 @@ import {
     Legend,
 } from "chart.js";
 import ExpandableChart from "./ExpandableChart";
+import { chartPalette } from "../theme";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
