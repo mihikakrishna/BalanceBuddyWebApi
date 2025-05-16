@@ -365,3 +365,4 @@ FodyWeavers.xsd
 # Ignore EF Core migration files
 **/Migrations/*
 !**/Migrations/*.gitkeep
+/balancebuddy.db
