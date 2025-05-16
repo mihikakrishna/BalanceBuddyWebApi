@@ -4,6 +4,6 @@ namespace BalanceBuddyWebApi.Services.Parsers;
 
 public interface IBankStatementParser
 {
-    string BankId { get; } // <- Add this
+    string BankId { get; }
     void ParseStatement(Stream csvStream);
 }

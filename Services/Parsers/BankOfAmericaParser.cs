@@ -22,7 +22,7 @@ public class BankOfAmericaStatementRecord
 }
 public class BankOfAmericaParser : IBankStatementParser
 {
-    public string BankId => "American Express";
+    public string BankId => "Bank Of America";
 
     private readonly AppDbContext _context;
 

@@ -26,7 +26,7 @@ public class CapitalOneCreditStatementRecord
 
 public class CapitalOneCreditParser : IBankStatementParser
 {
-    public string BankId => "Capital One Credit Account";
+    public string BankId => "Capital One Credit";
     private readonly AppDbContext _context;
 
     public CapitalOneCreditParser(AppDbContext context) => _context = context;

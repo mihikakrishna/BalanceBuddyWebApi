@@ -23,7 +23,7 @@ public class WellsFargoStatementRecord
 
 public class WellsFargoParser : IBankStatementParser
 {
-    public string BankId => "American Express";
+    public string BankId => "Wells Fargo";
 
     private readonly AppDbContext _context;
 

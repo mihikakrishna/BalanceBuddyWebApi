@@ -23,7 +23,7 @@ public class ChaseStatementRecord
 
 public class ChaseParser : IBankStatementParser
 {
-    public string BankId => "American Express";
+    public string BankId => "Chase";
 
     private readonly AppDbContext _context;
 
