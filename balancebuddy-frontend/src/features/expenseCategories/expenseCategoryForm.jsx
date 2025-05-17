@@ -23,13 +23,16 @@ const ExpenseCategoryForm = ({ onSuccess }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        await createExpenseCategory({
-            ...formData,
-            budget: parseFloat(formData.budget || "0"),
-        });
+
+        const payload = {
+            name: formData.name,
+            budget: formData.budget.trim() === "" ? null : parseFloat(formData.budget),
+        };
+
+        await createExpenseCategory(payload);
         setFormData({ name: "", budget: "" });
         onSuccess();
-        setOpen(false); // collapse form
+        setOpen(false);
     };
 
     return (
@@ -72,7 +75,6 @@ const ExpenseCategoryForm = ({ onSuccess }) => {
                         type="number"
                         value={formData.budget}
                         onChange={handleChange}
-                        required
                     />
                     <Button variant="contained" color="primary" type="submit">
                         Add Category

@@ -13,11 +13,13 @@ import {
     Collapse,
     useTheme,
     useMediaQuery,
+    Snackbar,
+    Alert,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { fetchExpenseCategories as fetchExpenseCategories, deleteExpenseCategory } from "../api/expenseCategory";
+import { fetchExpenseCategories, deleteExpenseCategory } from "../api/expenseCategory";
 import { fetchIncomeCategories, deleteIncomeCategory } from "../api/incomeCategory";
 import ExpenseCategoryForm from "../features/expenseCategories/expenseCategoryForm";
 import IncomeCategoryForm from "../features/incomeCategories/incomeCategoryForm";
@@ -27,6 +29,9 @@ const SettingsPage = ({ mode, toggleMode }) => {
     const [showExpenseCategories, setShowExpenseCategories] = useState(false);
     const [incomeCategories, setIncomeCategories] = useState([]);
     const [showIncomeCategories, setShowIncomeCategories] = useState(false);
+
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState("");
 
     const theme = useTheme();
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
@@ -67,6 +72,8 @@ const SettingsPage = ({ mode, toggleMode }) => {
             await loadExpenseCategories();
         } catch (err) {
             console.error("Failed to delete expense category:", err);
+            setSnackbarMessage("Could not delete category. Check if it is in use or try again.");
+            setSnackbarOpen(true);
         }
     };
 
@@ -76,6 +83,8 @@ const SettingsPage = ({ mode, toggleMode }) => {
             await loadIncomeCategories();
         } catch (err) {
             console.error("Failed to delete income category:", err);
+            setSnackbarMessage("Could not delete category. Check if it is in use or try again.");
+            setSnackbarOpen(true);
         }
     };
 
@@ -246,6 +255,18 @@ const SettingsPage = ({ mode, toggleMode }) => {
                     </Collapse>
                 </Box>
             </Paper>
+
+            {/* Snackbar */}
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={4000}
+                onClose={() => setSnackbarOpen(false)}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            >
+                <Alert severity="warning" onClose={() => setSnackbarOpen(false)}>
+                    {snackbarMessage}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };
