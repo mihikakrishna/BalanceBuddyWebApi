@@ -1,7 +1,10 @@
-﻿using BalanceBuddyWebApi.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using BalanceBuddyWebApi.Services;
 
-namespace BalanceBuddyWebApi.Services;
+public enum TransactionType
+{
+    Expense,
+    Income
+}
 
 public class TransactionOperation
 {
@@ -11,44 +14,51 @@ public class TransactionOperation
 
 public class UndoManager
 {
-    private readonly Stack<TransactionOperation> _undoStack = new();
-    private readonly Stack<TransactionOperation> _redoStack = new();
+    private readonly Dictionary<TransactionType, Stack<TransactionOperation>> _undoStacks = new();
+    private readonly Dictionary<TransactionType, Stack<TransactionOperation>> _redoStacks = new();
     private readonly DatabaseService _dbSvc;
 
     public UndoManager(DatabaseService dbSvc)
     {
         _dbSvc = dbSvc;
-    }
-
-    public void Push(TransactionOperation op)
-    {
-        _undoStack.Push(op);
-        _redoStack.Clear();
-    }
-
-    public void Undo()
-    {
-        if (_undoStack.TryPop(out var op))
+        foreach (TransactionType type in Enum.GetValues(typeof(TransactionType)))
         {
-            using var db = _dbSvc.CreateDbContext();
-            op.Undo();                            // op itself creates its own contexts
-            _redoStack.Push(op);
+            _undoStacks[type] = new();
+            _redoStacks[type] = new();
         }
     }
 
-    public void Redo()
+    public void Push(TransactionType type, TransactionOperation op)
     {
-        if (_redoStack.TryPop(out var op))
+        _undoStacks[type].Push(op);
+        _redoStacks[type].Clear();
+    }
+
+    public bool Undo(TransactionType type)
+    {
+        if (_undoStacks.TryGetValue(type, out var stack) && stack.TryPop(out var op))
         {
-            using var db = _dbSvc.CreateDbContext();
+            op.Undo();
+            _redoStacks[type].Push(op);
+            return true;
+        }
+        return false;
+    }
+
+    public bool Redo(TransactionType type)
+    {
+        if (_redoStacks.TryGetValue(type, out var stack) && stack.TryPop(out var op))
+        {
             op.Redo();
-            _undoStack.Push(op);
+            _undoStacks[type].Push(op);
+            return true;
         }
+        return false;
     }
 
-    public void Clear()
+    public void Clear(TransactionType type)
     {
-        _undoStack.Clear();
-        _redoStack.Clear();
+        _undoStacks[type].Clear();
+        _redoStacks[type].Clear();
     }
 }

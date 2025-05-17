@@ -61,19 +61,24 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
     /* ---------- undo/redo ---------- */
     const handleUndo = async () => {
         try {
-            await undo();
-            refreshIncomes();
-            enqueueSnackbar("Undo", { variant: "success" });
-        } catch {
+            const success = await undo("Income");
+            if (success) {
+                enqueueSnackbar("Undo successful", { variant: "success" });
+                refreshIncomes();
+            }
+        } catch (err) {
             enqueueSnackbar("Undo failed", { variant: "error" });
         }
     };
+
     const handleRedo = async () => {
         try {
-            await redo();
-            refreshIncomes();
-            enqueueSnackbar("Redo", { variant: "success" });
-        } catch {
+            const success = await redo("Income");
+            if (success) {
+                enqueueSnackbar("Redo successful", { variant: "success" });
+                refreshIncomes();
+            }
+        } catch (err) {
             enqueueSnackbar("Redo failed", { variant: "error" });
         }
     };

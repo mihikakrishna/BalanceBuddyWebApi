@@ -1,7 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using BalanceBuddyWebApi.Services;
-
-namespace BalanceBuddyWebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -14,17 +11,17 @@ public class UndoController : ControllerBase
         _undo = undo;
     }
 
-    [HttpPost("undo")]
-    public IActionResult Undo()
+    [HttpPost("undo/{type}")]
+    public IActionResult Undo(TransactionType type)
     {
-        _undo.Undo();
-        return Ok("Undo complete.");
+        bool success = _undo.Undo(type);
+        return success ? Ok("Undo complete.") : NoContent();
     }
 
-    [HttpPost("redo")]
-    public IActionResult Redo()
+    [HttpPost("redo/{type}")]
+    public IActionResult Redo(TransactionType type)
     {
-        _undo.Redo();
-        return Ok("Redo complete.");
+        bool success = _undo.Redo(type);
+        return success ? Ok("Redo complete.") : NoContent();
     }
 }

@@ -67,24 +67,25 @@ const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
 
     const handleUndo = async () => {
         try {
-            await undo();
-            console.log("Calling refreshExpenses after undo");
-            refreshExpenses();
-            enqueueSnackbar("Undo successful", { variant: "success" });
+            const success = await undo("Expense");
+            if (success) {
+                enqueueSnackbar("Undo successful", { variant: "success" });
+                refreshExpenses();
+            }
         } catch (err) {
             enqueueSnackbar("Undo failed", { variant: "error" });
-            console.error(err);
         }
     };
 
     const handleRedo = async () => {
         try {
-            await redo();
-            refreshExpenses();
-            enqueueSnackbar("Redo successful", { variant: "success" });
+            const success = await redo("Expense");
+            if (success) {
+                enqueueSnackbar("Redo successful", { variant: "success" });
+                refreshExpenses();
+            }
         } catch (err) {
             enqueueSnackbar("Redo failed", { variant: "error" });
-            console.error(err);
         }
     };
 

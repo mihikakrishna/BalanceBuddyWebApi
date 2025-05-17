@@ -19,46 +19,35 @@ public class ExpensesController : ControllerBase
         _undo = undo;
     }
 
-    /* ───────────────────────── READ ───────────────────────── */
-
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Expense>>> GetExpenses()
     {
         await using var ctx = _dbSvc.CreateDbContext();
-        var list = await ctx.Expenses
-                            .Include(e => e.Category)
-                            .OrderByDescending(e => e.Date)
-                            .ToListAsync();
-        return list;
+        return await ctx.Expenses.Include(e => e.Category).OrderByDescending(e => e.Date).ToListAsync();
     }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<Expense>> GetExpense(int id)
     {
         await using var ctx = _dbSvc.CreateDbContext();
-        var exp = await ctx.Expenses.Include(e => e.Category)
-                                    .FirstOrDefaultAsync(e => e.Id == id);
+        var exp = await ctx.Expenses.Include(e => e.Category).FirstOrDefaultAsync(e => e.Id == id);
         return exp is null ? NotFound() : exp;
     }
-
-    /* ───────────────────────── CREATE ───────────────────────── */
 
     [HttpPost]
     public async Task<ActionResult<Expense>> PostExpense(Expense expense)
     {
         await using var ctx = _dbSvc.CreateDbContext();
-
         if (!ctx.ExpenseCategories.Any(c => c.Id == expense.CategoryId))
         {
-            expense.CategoryId = ctx.ExpenseCategories
-                                    .First(c => c.Name == "Unreviewed").Id;
+            expense.CategoryId = ctx.ExpenseCategories.First(c => c.Name == "Unreviewed").Id;
         }
 
         ctx.Expenses.Add(expense);
         await ctx.SaveChangesAsync();
         int newId = expense.Id;
 
-        _undo.Push(new TransactionOperation
+        _undo.Push(TransactionType.Expense, new TransactionOperation
         {
             Undo = () =>
             {
@@ -81,22 +70,19 @@ public class ExpensesController : ControllerBase
         return CreatedAtAction(nameof(GetExpense), new { id = newId }, expense);
     }
 
-    /* ───────────────────────── UPDATE ───────────────────────── */
-
     [HttpPut("{id:int}")]
     public async Task<IActionResult> PutExpense(int id, Expense updated)
     {
         if (id != updated.Id) return BadRequest("ID mismatch");
 
         await using var ctx = _dbSvc.CreateDbContext();
-        var original = await ctx.Expenses.AsNoTracking()
-                                         .FirstOrDefaultAsync(e => e.Id == id);
+        var original = await ctx.Expenses.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
         if (original == null) return NotFound();
 
         ctx.Entry(updated).State = EntityState.Modified;
         await ctx.SaveChangesAsync();
 
-        _undo.Push(new TransactionOperation
+        _undo.Push(TransactionType.Expense, new TransactionOperation
         {
             Undo = () =>
             {
@@ -115,20 +101,17 @@ public class ExpensesController : ControllerBase
         return NoContent();
     }
 
-    /* ───────────────────────── DELETE ───────────────────────── */
-
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteExpense(int id)
     {
         await using var ctx = _dbSvc.CreateDbContext();
-        var exp = await ctx.Expenses.Include(e => e.Category)
-                                    .FirstOrDefaultAsync(e => e.Id == id);
+        var exp = await ctx.Expenses.Include(e => e.Category).FirstOrDefaultAsync(e => e.Id == id);
         if (exp == null) return NotFound();
 
         ctx.Expenses.Remove(exp);
         await ctx.SaveChangesAsync();
 
-        _undo.Push(new TransactionOperation
+        _undo.Push(TransactionType.Expense, new TransactionOperation
         {
             Undo = () =>
             {
