@@ -1,4 +1,5 @@
-﻿import React, { useEffect, useState } from "react";
+﻿/// <reference path="../expenses/expenseslist.jsx" />
+import React, { useEffect, useState } from "react";
 import {
     DataGrid,
     GridToolbarContainer,
@@ -143,14 +144,7 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
     /* ---------- UI ---------- */
     return (
         <Box sx={{ height: 600, width: "100%" }}>
-            <Typography variant="h6" gutterBottom>
-                All Incomes
-            </Typography>
-
-            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-                <Typography variant="subtitle1">
-                    Edit or undo your incomes below:
-                </Typography>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "right", mb: 2 }}>
                 <Box>
                     <Button onClick={handleUndo} sx={{ mr: 1 }} variant="outlined">
                         Undo

@@ -43,8 +43,6 @@ const IncomesPage = () => {
 
     return (
         <div>
-            <h2>Incomes Page</h2>
-
             <IncomeForm onSubmit={handleCreate} />
 
             {loading

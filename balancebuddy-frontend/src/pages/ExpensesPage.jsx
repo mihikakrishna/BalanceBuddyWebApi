@@ -34,7 +34,6 @@ const ExpensesPage = () => {
 
     return (
         <div>
-            <h2>Expenses Page</h2>
             <ExpenseForm onSubmit={handleCreate} />
             {loading ? <p>Loading...</p> : <ExpensesList
                 expenses={expenses}

@@ -171,11 +171,7 @@ const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
 
     return (
         <Box sx={{ height: 600, width: "100%" }}>
-            <Typography variant="h6" gutterBottom>
-                All Expenses
-            </Typography>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                <Typography variant="subtitle1">Edit or undo your expenses below:</Typography>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "right", mb: 2 }}>
                 <Box>
                     <Button onClick={handleUndo} sx={{ mr: 1 }} variant="outlined">
                         Undo
