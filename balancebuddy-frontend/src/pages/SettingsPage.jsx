@@ -14,9 +14,10 @@ import {
     useTheme,
     useMediaQuery,
     Snackbar,
-    Alert,
+    Alert
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { fetchExpenseCategories, deleteExpenseCategory } from "../api/expenseCategory";
@@ -29,6 +30,7 @@ const SettingsPage = ({ mode, toggleMode }) => {
     const [showExpenseCategories, setShowExpenseCategories] = useState(false);
     const [incomeCategories, setIncomeCategories] = useState([]);
     const [showIncomeCategories, setShowIncomeCategories] = useState(false);
+    const [editingExpenseCategory, setEditingExpenseCategory] = useState(null);
 
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -174,7 +176,13 @@ const SettingsPage = ({ mode, toggleMode }) => {
                     <Typography variant="h6" sx={{ mb: 1 }}>
                         Add New Category
                     </Typography>
-                    <ExpenseCategoryForm onSuccess={loadExpenseCategories} />
+                    <ExpenseCategoryForm
+                        onSuccess={() => {
+                            loadExpenseCategories();
+                            setEditingExpenseCategory(null);
+                        }}
+                        editingCategory={editingExpenseCategory}
+                    />
                 </Box>
 
                 {/* Expense Category List */}
@@ -192,13 +200,22 @@ const SettingsPage = ({ mode, toggleMode }) => {
                                 <ListItem
                                     key={cat.id}
                                     secondaryAction={
-                                        <IconButton
-                                            edge="end"
-                                            color="error"
-                                            onClick={() => handleDeleteExpense(cat.id)}
-                                        >
-                                            <DeleteIcon />
-                                        </IconButton>
+                                        <>
+                                            <IconButton
+                                                edge="end"
+                                                color="primary"
+                                                onClick={() => setEditingExpenseCategory(cat)}
+                                            >
+                                                <EditIcon />
+                                            </IconButton>
+                                            <IconButton
+                                                edge="end"
+                                                color="error"
+                                                onClick={() => handleDeleteExpense(cat.id)}
+                                            >
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </>
                                     }
                                 >
                                     <ListItemText

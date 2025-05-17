@@ -30,6 +30,30 @@ public class ExpenseCategoriesController : ControllerBase
         return CreatedAtAction(nameof(GetCategories), new { id = category.Id }, category);
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutCategory(int id, ExpenseCategory updated)
+    {
+        if (id != updated.Id) return BadRequest("ID mismatch");
+
+        var exists = await _context.ExpenseCategories.AnyAsync(c =>
+            c.Id != id && c.Name.ToLower() == updated.Name.ToLower());
+        if (exists) return Conflict("A category with that name already exists.");
+
+        _context.Entry(updated).State = EntityState.Modified;
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!_context.ExpenseCategories.Any(e => e.Id == id))
+                return NotFound();
+            else throw;
+        }
+
+        return NoContent();
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteCategory(int id)
     {
