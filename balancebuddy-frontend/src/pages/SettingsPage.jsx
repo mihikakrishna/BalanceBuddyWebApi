@@ -11,294 +11,181 @@ import {
     ListItemText,
     IconButton,
     Collapse,
+    Snackbar,
+    Alert,
     useTheme,
     useMediaQuery,
-    Snackbar,
-    Alert
+    Stack,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { fetchExpenseCategories, deleteExpenseCategory } from "../api/expenseCategory";
-import { fetchIncomeCategories, deleteIncomeCategory } from "../api/incomeCategory";
 import ExpenseCategoryForm from "../features/expenseCategories/expenseCategoryForm";
 import IncomeCategoryForm from "../features/incomeCategories/incomeCategoryForm";
+import {
+    fetchExpenseCategories,
+    deleteExpenseCategory,
+} from "../api/expenseCategory";
+import {
+    fetchIncomeCategories,
+    deleteIncomeCategory,
+} from "../api/incomeCategory";
 
 const SettingsPage = ({ mode, toggleMode }) => {
     const [expenseCategories, setExpenseCategories] = useState([]);
-    const [showExpenseCategories, setShowExpenseCategories] = useState(false);
     const [incomeCategories, setIncomeCategories] = useState([]);
-    const [showIncomeCategories, setShowIncomeCategories] = useState(false);
+    const [showExpenseCategories, setShowExpenseCategories] = useState(true);
+    const [showIncomeCategories, setShowIncomeCategories] = useState(true);
     const [editingExpenseCategory, setEditingExpenseCategory] = useState(null);
     const [editingIncomeCategory, setEditingIncomeCategory] = useState(null);
-
-
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState("");
+    const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "info" });
 
     const theme = useTheme();
-    const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
-    const darkModeRef = useRef(null);
-    const expenseFormRef = useRef(null);
-    const expenseListRef = useRef(null);
-    const incomeFormRef = useRef(null);
-    const incomeListRef = useRef(null);
-
-    const scrollTo = (ref) => {
-        if (ref.current) {
-            ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    const loadCategories = async () => {
+        try {
+            const [exp, inc] = await Promise.all([
+                fetchExpenseCategories(),
+                fetchIncomeCategories()
+            ]);
+            setExpenseCategories(exp);
+            setIncomeCategories(inc);
+        } catch (err) {
+            console.error(err);
         }
     };
 
-    const loadExpenseCategories = async () => {
+    const handleDelete = async (id, isExpense = true) => {
         try {
-            const data = await fetchExpenseCategories();
-            setExpenseCategories(data);
+            if (isExpense) {
+                await deleteExpenseCategory(id);
+                await loadCategories();
+            } else {
+                await deleteIncomeCategory(id);
+                await loadCategories();
+            }
         } catch (err) {
-            console.error("Failed to load expense categories:", err);
-        }
-    };
-
-    const loadIncomeCategories = async () => {
-        try {
-            const data = await fetchIncomeCategories();
-            setIncomeCategories(data);
-        } catch (err) {
-            console.error("Failed to load income categories:", err);
-        }
-    };
-
-    const handleDeleteExpense = async (id) => {
-        try {
-            await deleteExpenseCategory(id);
-            await loadExpenseCategories();
-        } catch (err) {
-            console.error("Failed to delete expense category:", err);
-            setSnackbarMessage("Could not delete category. Check if it is in use or try again.");
-            setSnackbarOpen(true);
-        }
-    };
-
-    const handleDeleteIncome = async (id) => {
-        try {
-            await deleteIncomeCategory(id);
-            await loadIncomeCategories();
-        } catch (err) {
-            console.error("Failed to delete income category:", err);
-            setSnackbarMessage("Could not delete category. Check if it is in use or try again.");
-            setSnackbarOpen(true);
+            setSnackbar({
+                open: true,
+                message: "Could not delete category. Check if it is in use or try again.",
+                severity: "warning"
+            });
         }
     };
 
     useEffect(() => {
-        loadExpenseCategories();
-        loadIncomeCategories();
+        loadCategories();
     }, []);
 
+    const renderCategoryList = (categories, isExpense = true) => (
+        <List dense>
+            {categories.map((cat) => (
+                <ListItem
+                    key={cat.id}
+                    secondaryAction={
+                        <Stack direction="row" spacing={1}>
+                            <IconButton
+                                color="primary"
+                                onClick={() =>
+                                    isExpense
+                                        ? setEditingExpenseCategory(cat)
+                                        : setEditingIncomeCategory(cat)
+                                }
+                            >
+                                <EditIcon />
+                            </IconButton>
+                            <IconButton
+                                color="error"
+                                onClick={() => handleDelete(cat.id, isExpense)}
+                            >
+                                <DeleteIcon />
+                            </IconButton>
+                        </Stack>
+                    }
+                >
+                    <ListItemText
+                        primary={cat.name}
+                        secondary={
+                            isExpense && cat.budget != null
+                                ? `Budget: $${parseFloat(cat.budget).toFixed(2)}`
+                                : undefined
+                        }
+                    />
+                </ListItem>
+            ))}
+        </List>
+    );
+
     return (
-        <Box
-            sx={{
-                display: "flex",
-                flexDirection: { xs: "column", sm: "row" },
-                gap: 2,
-                mt: 4,
-                px: 2,
-            }}
-        >
-            {/* Sidebar */}
-            <Paper
-                elevation={3}
-                sx={{
-                    p: 2,
-                    width: { xs: "100%", sm: "220px" },
-                    flexShrink: 0,
-                    backgroundColor:
-                        theme.palette.mode === "dark"
-                            ? "rgba(255,255,255,0.05)"
-                            : "rgba(255,255,255,0.7)",
-                    backdropFilter: "blur(10px)",
-                }}
-            >
-                <Typography variant="h6" gutterBottom>
-                    Settings
-                </Typography>
+        <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, p: 2 }}>
+            {/* Sidebar Navigation */}
+            <Paper sx={{ p: 2, width: { xs: "100%", sm: 220 } }}>
+                <Typography variant="h6" gutterBottom>Settings</Typography>
                 <List dense>
-                    <ListItem button onClick={() => scrollTo(darkModeRef)}>
-                        <ListItemText primary="Toggle Dark Mode" />
-                    </ListItem>
-                    <ListItem button onClick={() => scrollTo(expenseFormRef)}>
-                        <ListItemText primary="Add Expense Category" />
-                    </ListItem>
-                    <ListItem button onClick={() => scrollTo(expenseListRef)}>
-                        <ListItemText primary="View Expense Categories" />
-                    </ListItem>
-                    <ListItem button onClick={() => scrollTo(incomeFormRef)}>
-                        <ListItemText primary="Add Income Category" />
-                    </ListItem>
-                    <ListItem button onClick={() => scrollTo(incomeListRef)}>
-                        <ListItemText primary="View Income Categories" />
-                    </ListItem>
+                    {["Toggle Dark Mode", "Expense Categories", "Income Categories"].map(label => (
+                        <ListItem key={label}>
+                            <ListItemText primary={label} />
+                        </ListItem>
+                    ))}
                 </List>
             </Paper>
 
-            {/* Main Content */}
-            <Paper
-                elevation={3}
-                sx={{
-                    flexGrow: 1,
-                    p: 3,
-                    backgroundColor:
-                        theme.palette.mode === "dark"
-                            ? "rgba(255,255,255,0.05)"
-                            : "rgba(255,255,255,0.7)",
-                    backdropFilter: "blur(10px)",
-                }}
-            >
-                <Box ref={darkModeRef}>
-                    <Typography variant="h5" gutterBottom>
-                        General Settings
-                    </Typography>
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                checked={mode === "dark"}
-                                onChange={toggleMode}
-                                color="primary"
-                            />
-                        }
-                        label="Dark Mode"
-                    />
-                </Box>
+            {/* Main Settings Panel */}
+            <Paper sx={{ flexGrow: 1, p: 3 }}>
+                <Typography variant="h5" gutterBottom>General Settings</Typography>
+                <FormControlLabel
+                    control={<Switch checked={mode === "dark"} onChange={toggleMode} />}
+                    label="Dark Mode"
+                />
+                <Divider sx={{ my: 3 }} />
 
-                {/* Add Expense Category */}
-                <Box ref={expenseFormRef} sx={{ mt: 4 }}>
-                    <Typography variant="h5">Expense Categories</Typography>
-                    <Typography variant="h6" sx={{ mb: 1 }}>
-                        Add New Category
-                    </Typography>
-                    <ExpenseCategoryForm
-                        onSuccess={() => {
-                            loadExpenseCategories();
-                            setEditingExpenseCategory(null);
-                        }}
-                        editingCategory={editingExpenseCategory}
-                    />
-                </Box>
-
-                {/* Expense Category List */}
-                <Box ref={expenseListRef} sx={{ mt: 4 }}>
+                {/* Expense Categories */}
+                <Typography variant="h5">Expense Categories</Typography>
+                <ExpenseCategoryForm
+                    onSuccess={loadCategories}
+                    editingCategory={editingExpenseCategory}
+                />
+                <Box mt={2}>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <Typography variant="h6">Existing Expense Categories</Typography>
-                        <IconButton onClick={() => setShowExpenseCategories((prev) => !prev)}>
+                        <Typography variant="h6">Existing Categories</Typography>
+                        <IconButton onClick={() => setShowExpenseCategories(p => !p)}>
                             {showExpenseCategories ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                         </IconButton>
                     </Box>
-                    <Divider sx={{ my: 1 }} />
                     <Collapse in={showExpenseCategories}>
-                        <List dense>
-                            {expenseCategories.map((cat) => (
-                                <ListItem
-                                    key={cat.id}
-                                    secondaryAction={
-                                        <>
-                                            <IconButton
-                                                edge="end"
-                                                color="primary"
-                                                onClick={() => setEditingExpenseCategory(cat)}
-                                            >
-                                                <EditIcon />
-                                            </IconButton>
-                                            <IconButton
-                                                edge="end"
-                                                color="error"
-                                                onClick={() => handleDeleteExpense(cat.id)}
-                                            >
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        </>
-                                    }
-                                >
-                                    <ListItemText
-                                        primary={cat.name}
-                                        secondary={
-                                            cat.budget != null
-                                                ? `Budget: $${parseFloat(cat.budget).toFixed(2)}`
-                                                : undefined
-                                        }
-                                    />
-                                </ListItem>
-                            ))}
-                        </List>
+                        {renderCategoryList(expenseCategories, true)}
                     </Collapse>
                 </Box>
 
-                {/* Add Income Category */}
-                <Box ref={incomeFormRef} sx={{ mt: 6 }}>
-                    <Typography variant="h5">Income Categories</Typography>
-                    <Typography variant="h6" sx={{ mb: 1 }}>
-                        Add New Category
-                    </Typography>
-                    <IncomeCategoryForm
-                        onSuccess={() => {
-                            loadIncomeCategories();
-                            setEditingIncomeCategory(null);
-                        }}
-                        editingCategory={editingIncomeCategory}
-                    />
-                </Box>
-
-                {/* Income Category List */}
-                <Box ref={incomeListRef} sx={{ mt: 4 }}>
+                {/* Income Categories */}
+                <Typography variant="h5" mt={5}>Income Categories</Typography>
+                <IncomeCategoryForm
+                    onSuccess={loadCategories}
+                    editingCategory={editingIncomeCategory}
+                />
+                <Box mt={2}>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <Typography variant="h6">Existing Income Categories</Typography>
-                        <IconButton onClick={() => setShowIncomeCategories((prev) => !prev)}>
+                        <Typography variant="h6">Existing Categories</Typography>
+                        <IconButton onClick={() => setShowIncomeCategories(p => !p)}>
                             {showIncomeCategories ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                         </IconButton>
                     </Box>
-                    <Divider sx={{ my: 1 }} />
                     <Collapse in={showIncomeCategories}>
-                        <List dense>
-                            {incomeCategories.map((cat) => (
-                                <ListItem
-                                    key={cat.id}
-                                    secondaryAction={
-                                        <>
-                                            <IconButton
-                                                edge="end"
-                                                color="primary"
-                                                onClick={() => setEditingIncomeCategory(cat)}
-                                            >
-                                                <EditIcon />
-                                            </IconButton>
-                                            <IconButton
-                                                edge="end"
-                                                color="error"
-                                                onClick={() => handleDeleteIncome(cat.id)}
-                                            >
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        </>
-                                    }
-                                >
-                                    <ListItemText primary={cat.name} />
-                                </ListItem>
-                            ))}
-                        </List>
+                        {renderCategoryList(incomeCategories, false)}
                     </Collapse>
                 </Box>
             </Paper>
 
             {/* Snackbar */}
             <Snackbar
-                open={snackbarOpen}
+                open={snackbar.open}
                 autoHideDuration={4000}
-                onClose={() => setSnackbarOpen(false)}
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
                 anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
             >
-                <Alert severity="warning" onClose={() => setSnackbarOpen(false)}>
-                    {snackbarMessage}
+                <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+                    {snackbar.message}
                 </Alert>
             </Snackbar>
         </Box>
