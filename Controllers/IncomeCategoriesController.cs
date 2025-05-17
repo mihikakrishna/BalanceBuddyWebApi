@@ -32,6 +32,35 @@ public class IncomeCategoriesController : ControllerBase
         return CreatedAtAction(nameof(GetCategories), new { id = category.Id }, category);
     }
 
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> PutCategory(int id, IncomeCategory updated)
+    {
+        if (id != updated.Id) return BadRequest("ID mismatch");
+
+        await using var ctx = _dbSvc.CreateDbContext();
+
+        var exists = await ctx.IncomeCategories
+            .AnyAsync(c => c.Id != id && c.Name.ToLower() == updated.Name.ToLower());
+        if (exists)
+            return Conflict("A category with that name already exists.");
+
+        ctx.Entry(updated).State = EntityState.Modified;
+
+        try
+        {
+            await ctx.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!ctx.IncomeCategories.Any(e => e.Id == id))
+                return NotFound();
+            else throw;
+        }
+
+        return NoContent();
+    }
+
+
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteCategory(int id)
     {

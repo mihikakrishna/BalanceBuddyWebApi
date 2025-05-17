@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     TextField,
     Button,
@@ -8,14 +8,31 @@ import {
     Divider,
     Collapse,
     IconButton,
+    Snackbar,
+    Alert,
 } from "@mui/material";
-import { createIncomeCategory } from "../../api/incomeCategory";
+import {
+    createIncomeCategory,
+    updateIncomeCategory,
+} from "../../api/incomeCategory";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 
-const IncomeCategoryForm = ({ onSuccess }) => {
-    const [formData, setFormData] = useState({ name: "", budget: "" });
+const IncomeCategoryForm = ({ onSuccess, editingCategory }) => {
+    const [formData, setFormData] = useState({ name: "" });
     const [open, setOpen] = useState(false);
+    const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+
+    useEffect(() => {
+        if (editingCategory) {
+            setFormData({
+                name: editingCategory.name || "",
+            });
+            setOpen(true);
+        } else {
+            setFormData({ name: "" });
+        }
+    }, [editingCategory]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,13 +40,31 @@ const IncomeCategoryForm = ({ onSuccess }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        await createIncomeCategory({
-            ...formData,
-            budget: parseFloat(formData.budget || "0"),
-        });
-        setFormData({ name: "", budget: "" });
-        onSuccess();
-        setOpen(false); // collapse form
+
+        const payload = {
+            id: editingCategory?.id,
+            name: formData.name,
+        };
+
+        try {
+            if (editingCategory) {
+                await updateIncomeCategory(editingCategory.id, payload);
+                setSnackbar({ open: true, message: "Category updated", severity: "success" });
+            } else {
+                await createIncomeCategory(payload);
+                setSnackbar({ open: true, message: "Category created", severity: "success" });
+            }
+            setFormData({ name: "" });
+            onSuccess();
+            setOpen(false);
+        } catch (err) {
+            console.error(err);
+            setSnackbar({
+                open: true,
+                message: "Category name might already exist. Try another.",
+                severity: "error",
+            });
+        }
     };
 
     return (
@@ -47,7 +82,9 @@ const IncomeCategoryForm = ({ onSuccess }) => {
             })}
         >
             <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Typography variant="h6">Add New Income Category</Typography>
+                <Typography variant="h6">
+                    {editingCategory ? "Edit Income Category" : "Add New Income Category"}
+                </Typography>
                 <IconButton onClick={() => setOpen(!open)}>
                     {open ? <RemoveIcon /> : <AddIcon />}
                 </IconButton>
@@ -67,10 +104,23 @@ const IncomeCategoryForm = ({ onSuccess }) => {
                         required
                     />
                     <Button variant="contained" color="primary" type="submit">
-                        Add Category
+                        {editingCategory ? "Update Category" : "Add Category"}
                     </Button>
                 </Box>
             </Collapse>
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={4000}
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            >
+                <Alert
+                    severity={snackbar.severity}
+                    onClose={() => setSnackbar({ ...snackbar, open: false })}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </Paper>
     );
 };

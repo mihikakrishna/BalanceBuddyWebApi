@@ -31,6 +31,8 @@ const SettingsPage = ({ mode, toggleMode }) => {
     const [incomeCategories, setIncomeCategories] = useState([]);
     const [showIncomeCategories, setShowIncomeCategories] = useState(false);
     const [editingExpenseCategory, setEditingExpenseCategory] = useState(null);
+    const [editingIncomeCategory, setEditingIncomeCategory] = useState(null);
+
 
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -238,7 +240,13 @@ const SettingsPage = ({ mode, toggleMode }) => {
                     <Typography variant="h6" sx={{ mb: 1 }}>
                         Add New Category
                     </Typography>
-                    <IncomeCategoryForm onSuccess={loadIncomeCategories} />
+                    <IncomeCategoryForm
+                        onSuccess={() => {
+                            loadIncomeCategories();
+                            setEditingIncomeCategory(null);
+                        }}
+                        editingCategory={editingIncomeCategory}
+                    />
                 </Box>
 
                 {/* Income Category List */}
@@ -256,13 +264,22 @@ const SettingsPage = ({ mode, toggleMode }) => {
                                 <ListItem
                                     key={cat.id}
                                     secondaryAction={
-                                        <IconButton
-                                            edge="end"
-                                            color="error"
-                                            onClick={() => handleDeleteIncome(cat.id)}
-                                        >
-                                            <DeleteIcon />
-                                        </IconButton>
+                                        <>
+                                            <IconButton
+                                                edge="end"
+                                                color="primary"
+                                                onClick={() => setEditingIncomeCategory(cat)}
+                                            >
+                                                <EditIcon />
+                                            </IconButton>
+                                            <IconButton
+                                                edge="end"
+                                                color="error"
+                                                onClick={() => handleDeleteIncome(cat.id)}
+                                            >
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </>
                                     }
                                 >
                                     <ListItemText primary={cat.name} />
