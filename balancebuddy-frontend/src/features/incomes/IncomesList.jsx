@@ -8,7 +8,7 @@ import {
 } from "@mui/x-data-grid";
 import { Button, Typography, Box, Select, MenuItem } from "@mui/material";
 import { updateIncome } from "../../api/incomes";
-import { fetchCategories } from "../../api/incomeCategory";
+import { fetchIncomeCategories } from "../../api/incomeCategory";
 import { undo, redo } from "../../api/undo";
 import { useSnackbar } from "notistack";
 
@@ -25,7 +25,7 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
 
     /* ---------- categories ---------- */
     useEffect(() => {
-        fetchCategories()
+        fetchIncomeCategories()
             .then(setCategories)
             .catch((e) => console.error("load income cats:", e));
     }, []);

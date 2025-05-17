@@ -7,7 +7,7 @@ import {
 } from "@mui/x-data-grid";
 import { Button, Typography, Box, Select, MenuItem } from "@mui/material";
 import { updateExpense } from "../../api/expenses";
-import { fetchCategories } from "../../api/expenseCategory";
+import { fetchExpenseCategories } from "../../api/expenseCategory";
 import { undo, redo } from "../../api/undo";
 import { useSnackbar } from "notistack";
 
@@ -25,7 +25,7 @@ const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
     useEffect(() => {
         const loadCategories = async () => {
             try {
-                const data = await fetchCategories();
+                const data = await fetchExpenseCategories();
                 setCategories(data);
             } catch (err) {
                 console.error("Failed to load categories:", err);

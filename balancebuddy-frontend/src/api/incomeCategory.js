@@ -1,6 +1,6 @@
 const BASE_URL = "/api/incomecategories";
 
-export async function fetchCategories() {
+export async function fetchIncomeCategories() {
     const res = await fetch(BASE_URL);
     if (!res.ok) throw new Error("Failed to fetch income categories");
     return res.json();

@@ -11,44 +11,31 @@ import {
     ListItemText,
     IconButton,
     Collapse,
-    Button,
     useTheme,
     useMediaQuery,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { fetchCategories, deleteExpenseCategory } from "../api/expenseCategory";
+import { fetchExpenseCategories as fetchExpenseCategories, deleteExpenseCategory } from "../api/expenseCategory";
+import { fetchIncomeCategories, deleteIncomeCategory } from "../api/incomeCategory";
 import ExpenseCategoryForm from "../features/expenseCategories/expenseCategoryForm";
+import IncomeCategoryForm from "../features/incomeCategories/incomeCategoryForm";
 
 const SettingsPage = ({ mode, toggleMode }) => {
-    const [categories, setCategories] = useState([]);
-    const [showCategories, setShowCategories] = useState(false);
+    const [expenseCategories, setExpenseCategories] = useState([]);
+    const [showExpenseCategories, setShowExpenseCategories] = useState(false);
+    const [incomeCategories, setIncomeCategories] = useState([]);
+    const [showIncomeCategories, setShowIncomeCategories] = useState(false);
 
     const theme = useTheme();
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
     const darkModeRef = useRef(null);
-    const addCategoryRef = useRef(null);
-    const listRef = useRef(null);
-
-    const loadCategories = async () => {
-        try {
-            const data = await fetchCategories();
-            setCategories(data);
-        } catch (err) {
-            console.error("Failed to load categories:", err);
-        }
-    };
-
-    const handleDelete = async (id) => {
-        try {
-            await deleteExpenseCategory(id);
-            await loadCategories();
-        } catch (err) {
-            console.error("Failed to delete category:", err);
-        }
-    };
+    const expenseFormRef = useRef(null);
+    const expenseListRef = useRef(null);
+    const incomeFormRef = useRef(null);
+    const incomeListRef = useRef(null);
 
     const scrollTo = (ref) => {
         if (ref.current) {
@@ -56,8 +43,45 @@ const SettingsPage = ({ mode, toggleMode }) => {
         }
     };
 
+    const loadExpenseCategories = async () => {
+        try {
+            const data = await fetchExpenseCategories();
+            setExpenseCategories(data);
+        } catch (err) {
+            console.error("Failed to load expense categories:", err);
+        }
+    };
+
+    const loadIncomeCategories = async () => {
+        try {
+            const data = await fetchIncomeCategories();
+            setIncomeCategories(data);
+        } catch (err) {
+            console.error("Failed to load income categories:", err);
+        }
+    };
+
+    const handleDeleteExpense = async (id) => {
+        try {
+            await deleteExpenseCategory(id);
+            await loadExpenseCategories();
+        } catch (err) {
+            console.error("Failed to delete expense category:", err);
+        }
+    };
+
+    const handleDeleteIncome = async (id) => {
+        try {
+            await deleteIncomeCategory(id);
+            await loadIncomeCategories();
+        } catch (err) {
+            console.error("Failed to delete income category:", err);
+        }
+    };
+
     useEffect(() => {
-        loadCategories();
+        loadExpenseCategories();
+        loadIncomeCategories();
     }, []);
 
     return (
@@ -73,7 +97,7 @@ const SettingsPage = ({ mode, toggleMode }) => {
             {/* Sidebar */}
             <Paper
                 elevation={3}
-                sx={(theme) => ({
+                sx={{
                     p: 2,
                     width: { xs: "100%", sm: "220px" },
                     flexShrink: 0,
@@ -82,7 +106,7 @@ const SettingsPage = ({ mode, toggleMode }) => {
                             ? "rgba(255,255,255,0.05)"
                             : "rgba(255,255,255,0.7)",
                     backdropFilter: "blur(10px)",
-                })}
+                }}
             >
                 <Typography variant="h6" gutterBottom>
                     Settings
@@ -91,11 +115,17 @@ const SettingsPage = ({ mode, toggleMode }) => {
                     <ListItem button onClick={() => scrollTo(darkModeRef)}>
                         <ListItemText primary="Toggle Dark Mode" />
                     </ListItem>
-                    <ListItem button onClick={() => scrollTo(addCategoryRef)}>
+                    <ListItem button onClick={() => scrollTo(expenseFormRef)}>
                         <ListItemText primary="Add Expense Category" />
                     </ListItem>
-                    <ListItem button onClick={() => scrollTo(listRef)}>
+                    <ListItem button onClick={() => scrollTo(expenseListRef)}>
                         <ListItemText primary="View Expense Categories" />
+                    </ListItem>
+                    <ListItem button onClick={() => scrollTo(incomeFormRef)}>
+                        <ListItemText primary="Add Income Category" />
+                    </ListItem>
+                    <ListItem button onClick={() => scrollTo(incomeListRef)}>
+                        <ListItemText primary="View Income Categories" />
                     </ListItem>
                 </List>
             </Paper>
@@ -103,7 +133,7 @@ const SettingsPage = ({ mode, toggleMode }) => {
             {/* Main Content */}
             <Paper
                 elevation={3}
-                sx={(theme) => ({
+                sx={{
                     flexGrow: 1,
                     p: 3,
                     backgroundColor:
@@ -111,9 +141,8 @@ const SettingsPage = ({ mode, toggleMode }) => {
                             ? "rgba(255,255,255,0.05)"
                             : "rgba(255,255,255,0.7)",
                     backdropFilter: "blur(10px)",
-                })}
+                }}
             >
-                {/* Dark Mode Toggle */}
                 <Box ref={darkModeRef}>
                     <Typography variant="h5" gutterBottom>
                         General Settings
@@ -130,42 +159,34 @@ const SettingsPage = ({ mode, toggleMode }) => {
                     />
                 </Box>
 
-                {/* Add Category Form */}
-                <Box ref={addCategoryRef} sx={{ mt: 4 }}>
-                    <Typography variant="h5" gutterBottom>
-                        Expense Categories
-                    </Typography>
+                {/* Add Expense Category */}
+                <Box ref={expenseFormRef} sx={{ mt: 4 }}>
+                    <Typography variant="h5">Expense Categories</Typography>
                     <Typography variant="h6" sx={{ mb: 1 }}>
                         Add New Category
                     </Typography>
-                    <ExpenseCategoryForm onSuccess={loadCategories} />
+                    <ExpenseCategoryForm onSuccess={loadExpenseCategories} />
                 </Box>
 
-                {/* Collapsible Category List */}
-                <Box ref={listRef} sx={{ mt: 4 }}>
-                    <Box
-                        display="flex"
-                        justifyContent="space-between"
-                        alignItems="center"
-                    >
-                        <Typography variant="h6">
-                            Existing Categories
-                        </Typography>
-                        <IconButton onClick={() => setShowCategories((prev) => !prev)}>
-                            {showCategories ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                {/* Expense Category List */}
+                <Box ref={expenseListRef} sx={{ mt: 4 }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                        <Typography variant="h6">Existing Expense Categories</Typography>
+                        <IconButton onClick={() => setShowExpenseCategories((prev) => !prev)}>
+                            {showExpenseCategories ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                         </IconButton>
                     </Box>
                     <Divider sx={{ my: 1 }} />
-                    <Collapse in={showCategories}>
+                    <Collapse in={showExpenseCategories}>
                         <List dense>
-                            {categories.map((cat) => (
+                            {expenseCategories.map((cat) => (
                                 <ListItem
                                     key={cat.id}
                                     secondaryAction={
                                         <IconButton
                                             edge="end"
                                             color="error"
-                                            onClick={() => handleDelete(cat.id)}
+                                            onClick={() => handleDeleteExpense(cat.id)}
                                         >
                                             <DeleteIcon />
                                         </IconButton>
@@ -179,6 +200,46 @@ const SettingsPage = ({ mode, toggleMode }) => {
                                                 : undefined
                                         }
                                     />
+                                </ListItem>
+                            ))}
+                        </List>
+                    </Collapse>
+                </Box>
+
+                {/* Add Income Category */}
+                <Box ref={incomeFormRef} sx={{ mt: 6 }}>
+                    <Typography variant="h5">Income Categories</Typography>
+                    <Typography variant="h6" sx={{ mb: 1 }}>
+                        Add New Category
+                    </Typography>
+                    <IncomeCategoryForm onSuccess={loadIncomeCategories} />
+                </Box>
+
+                {/* Income Category List */}
+                <Box ref={incomeListRef} sx={{ mt: 4 }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                        <Typography variant="h6">Existing Income Categories</Typography>
+                        <IconButton onClick={() => setShowIncomeCategories((prev) => !prev)}>
+                            {showIncomeCategories ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                        </IconButton>
+                    </Box>
+                    <Divider sx={{ my: 1 }} />
+                    <Collapse in={showIncomeCategories}>
+                        <List dense>
+                            {incomeCategories.map((cat) => (
+                                <ListItem
+                                    key={cat.id}
+                                    secondaryAction={
+                                        <IconButton
+                                            edge="end"
+                                            color="error"
+                                            onClick={() => handleDeleteIncome(cat.id)}
+                                        >
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    }
+                                >
+                                    <ListItemText primary={cat.name} />
                                 </ListItem>
                             ))}
                         </List>

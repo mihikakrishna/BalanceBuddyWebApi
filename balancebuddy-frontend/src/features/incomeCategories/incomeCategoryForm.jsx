@@ -66,14 +66,6 @@ const IncomeCategoryForm = ({ onSuccess }) => {
                         onChange={handleChange}
                         required
                     />
-                    <TextField
-                        label="Budget"
-                        name="budget"
-                        type="number"
-                        value={formData.budget}
-                        onChange={handleChange}
-                        required
-                    />
                     <Button variant="contained" color="primary" type="submit">
                         Add Category
                     </Button>
