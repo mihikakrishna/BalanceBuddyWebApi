@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+﻿import React, { useState, useMemo } from "react";
 import {
     BrowserRouter as Router,
     Routes,
@@ -46,10 +46,10 @@ const navItems = [
 const Sidebar = ({ mode }) => {
     const location = useLocation();
 
-    const lightGreen = "#A6CE8A"; // sidebar background
-    const darkGreen = "#85B86E";  // active item background
-    const textColor = "#2F4F2F";  // default text
-    const activeText = "#FFFFFF"; // selected text
+    const lightGreen = "#A6CE8A";
+    const darkGreen = "#85B86E";
+    const textColor = "#2F4F2F";
+    const activeText = "#FFFFFF";
 
     return (
         <Box
@@ -132,8 +132,9 @@ function App() {
                             display: "flex",
                             flexDirection: "column",
                             bgcolor: theme.palette.background.default,
-                            height: "100vh",
-                            overflow: "hidden",
+                            minHeight: "100vh",
+                            overflowY: "auto",
+                            overflowX: "hidden",
                         }}
                     >
                         {/* Top-right toggle bar */}
@@ -143,7 +144,8 @@ function App() {
                                 justifyContent: "flex-end",
                                 alignItems: "center",
                                 px: 3,
-                                py: 2,
+                                py: 0,
+                                mt: 2,
                             }}
                         >
                             <IconButton onClick={toggleMode} color="inherit">
@@ -156,8 +158,8 @@ function App() {
                             sx={{
                                 flexGrow: 1,
                                 px: 3,
+                                pt: 0,
                                 pb: 3,
-                                overflow: "hidden",
                             }}
                         >
                             <Routes>
