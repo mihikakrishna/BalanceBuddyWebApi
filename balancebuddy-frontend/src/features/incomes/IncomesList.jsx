@@ -11,6 +11,8 @@ import { updateIncome } from "../../api/incomes";
 import { fetchIncomeCategories } from "../../api/incomeCategory";
 import { undo, redo } from "../../api/undo";
 import { useSnackbar } from "notistack";
+import '../../App.css';
+
 
 const Toolbar = () => (
     <GridToolbarContainer>
@@ -172,6 +174,11 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
                 onProcessRowUpdateError={(e) => console.error("DG update:", e)}
                 experimentalFeatures={{ newEditingApi: true }}
                 components={{ Toolbar }}
+                getRowClassName={(params) =>
+                    params.row.categoryName?.toLowerCase() === "unreviewed"
+                        ? "unreviewed-row"
+                        : ""
+                }
             />
         </Box>
     );

@@ -12,3 +12,7 @@ body {
     font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
     background-color: transparent;
 }
+
+.unreviewed-row {
+    background-color: #ffe6e6; /* light red background */
+}

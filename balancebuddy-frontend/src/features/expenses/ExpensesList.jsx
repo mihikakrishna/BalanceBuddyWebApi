@@ -10,6 +10,8 @@ import { updateExpense } from "../../api/expenses";
 import { fetchExpenseCategories } from "../../api/expenseCategory";
 import { undo, redo } from "../../api/undo";
 import { useSnackbar } from "notistack";
+import '../../App.css';
+
 
 const CustomToolbar = () => (
     <GridToolbarContainer>
@@ -196,6 +198,11 @@ const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
                 }
                 experimentalFeatures={{ newEditingApi: true }}
                 components={{ Toolbar: CustomToolbar }}
+                getRowClassName={(params) =>
+                    params.row.categoryName?.toLowerCase() === "unreviewed"
+                        ? "unreviewed-row"
+                        : ""
+                }
             />
         </Box>
     );
