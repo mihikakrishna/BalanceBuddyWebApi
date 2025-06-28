@@ -25,6 +25,11 @@ public class ExpenseCategoriesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ExpenseCategory>> PostCategory(ExpenseCategory category)
     {
+        var exists = await _context.ExpenseCategories
+            .AnyAsync(c => c.Name.ToLower() == category.Name.ToLower());
+        if (exists)
+            return Conflict("A category with that name already exists.");
+
         _context.ExpenseCategories.Add(category);
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetCategories), new { id = category.Id }, category);
@@ -35,22 +40,22 @@ public class ExpenseCategoriesController : ControllerBase
     {
         if (id != updated.Id) return BadRequest("ID mismatch");
 
-        var exists = await _context.ExpenseCategories.AnyAsync(c =>
-            c.Id != id && c.Name.ToLower() == updated.Name.ToLower());
-        if (exists) return Conflict("A category with that name already exists.");
+        var existing = await _context.ExpenseCategories.FindAsync(id);
+        if (existing == null)
+            return NotFound();
 
-        _context.Entry(updated).State = EntityState.Modified;
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!_context.ExpenseCategories.Any(e => e.Id == id))
-                return NotFound();
-            else throw;
-        }
+        if (existing.Name == "Unreviewed")
+            return BadRequest("Cannot edit the default 'Unreviewed' category.");
 
+        var nameConflict = await _context.ExpenseCategories
+            .AnyAsync(c => c.Id != id && c.Name.ToLower() == updated.Name.ToLower());
+        if (nameConflict)
+            return Conflict("A category with that name already exists.");
+
+        existing.Name = updated.Name;
+        existing.Budget = updated.Budget;
+
+        await _context.SaveChangesAsync();
         return NoContent();
     }
 
@@ -60,6 +65,10 @@ public class ExpenseCategoriesController : ControllerBase
         var category = await _context.ExpenseCategories.FindAsync(id);
         if (category == null || category.Name == "Unreviewed")
             return BadRequest("Cannot delete default or missing category");
+
+        var isUsed = await _context.Expenses.AnyAsync(e => e.CategoryId == id);
+        if (isUsed)
+            return Conflict("Cannot delete category because it is in use.");
 
         _context.ExpenseCategories.Remove(category);
         await _context.SaveChangesAsync();
