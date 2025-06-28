@@ -38,7 +38,7 @@ public class WellsFargoParser : IBankStatementParser
         using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
         {
             Delimiter = ",",
-            HasHeaderRecord = true,
+            HasHeaderRecord = false,
             IgnoreBlankLines = true
         });
 
