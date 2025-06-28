@@ -195,9 +195,7 @@ const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
                 checkboxSelection
                 disableSelectionOnClick
                 processRowUpdate={handleRowUpdate}
-                onProcessRowUpdateError={(error) =>
-                    console.error("Update error:", error)
-                }
+                onProcessRowUpdateError={(error) => console.error("Update error:", error)}
                 experimentalFeatures={{ newEditingApi: true }}
                 components={{ Toolbar: CustomToolbar }}
                 getRowClassName={(params) => {
@@ -208,7 +206,24 @@ const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
                         ? "unreviewed-row-dark"
                         : "unreviewed-row";
                 }}
+                slotProps={{
+                    panel: {
+                        sx: (theme) => ({
+                            ...(theme.palette.mode === "light" && {
+                                backgroundColor: "#ffffff",
+                                color: "#000000",
+                            }),
+                            ...(theme.palette.mode === "dark" && {
+                                backgroundColor: "#1e1e1e",
+                                color: "#f0f0f0",
+                            }),
+                            border: "1px solid rgba(255,255,255,0.15)",
+                            boxShadow: "0px 4px 12px rgba(0,0,0,0.8)",
+                        }),
+                    },
+                }}
             />
+
         </Box>
     );
 };

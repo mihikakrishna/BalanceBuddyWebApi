@@ -21,3 +21,19 @@ body {
     background-color: rgba(255, 100, 100, 0.2);
 }
 
+.MuiDataGrid-panel {
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+    .MuiDataGrid-panel {
+        background-color: #212121;
+        color: #f0f0f0; 
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.8);
+    }
+}
+
