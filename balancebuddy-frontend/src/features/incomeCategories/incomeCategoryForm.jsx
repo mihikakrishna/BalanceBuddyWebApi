@@ -5,123 +5,223 @@ import {
     Paper,
     Typography,
     Box,
-    Divider,
-    Collapse,
     IconButton,
     Snackbar,
     Alert,
+    Collapse,
+    Divider,
 } from "@mui/material";
 import {
     createIncomeCategory,
     updateIncomeCategory,
+    fetchIncomeCategories,
+    deleteIncomeCategory,
 } from "../../api/incomeCategory";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
+import DeleteIcon from "@mui/icons-material/Delete";
 
-const IncomeCategoryForm = ({ onSuccess, editingCategory }) => {
+const IncomeCategoryForm = () => {
+    const [categories, setCategories] = useState([]);
     const [formData, setFormData] = useState({ name: "" });
-    const [open, setOpen] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+    const [openForm, setOpenForm] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+    const [editingName, setEditingName] = useState("");
 
-    useEffect(() => {
-        if (editingCategory) {
-            setFormData({
-                name: editingCategory.name || "",
-            });
-            setOpen(true);
-        } else {
-            setFormData({ name: "" });
-        }
-    }, [editingCategory]);
-
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        const payload = {
-            id: editingCategory?.id,
-            name: formData.name,
-        };
-
+    const loadCategories = async () => {
         try {
-            if (editingCategory) {
-                await updateIncomeCategory(editingCategory.id, payload);
-                setSnackbar({ open: true, message: "Category updated", severity: "success" });
-            } else {
-                await createIncomeCategory(payload);
-                setSnackbar({ open: true, message: "Category created", severity: "success" });
-            }
-            setFormData({ name: "" });
-            onSuccess();
-            setOpen(false);
+            const data = await fetchIncomeCategories();
+            setCategories(data);
         } catch (err) {
             console.error(err);
             setSnackbar({
                 open: true,
-                message: "Category name might already exist. Try another.",
+                message: err.message || "Failed to load categories.",
+                severity: "error",
+            });
+        }
+    };
+
+    useEffect(() => {
+        loadCategories();
+    }, []);
+
+    const handleFormChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleFormSubmit = async (e) => {
+        e.preventDefault();
+        const payload = { name: formData.name.trim() };
+        try {
+            await createIncomeCategory(payload);
+            setSnackbar({ open: true, message: "Category created.", severity: "success" });
+            setFormData({ name: "" });
+            setOpenForm(false);
+            loadCategories();
+        } catch (err) {
+            console.error(err);
+            setSnackbar({
+                open: true,
+                message: err.message || "Failed to create category.",
+                severity: "error",
+            });
+        }
+    };
+
+    const startEdit = (category) => {
+        setEditingId(category.id);
+        setEditingName(category.name);
+    };
+
+    const cancelEdit = () => {
+        setEditingId(null);
+        setEditingName("");
+    };
+
+    const saveEdit = async (category) => {
+        try {
+            await updateIncomeCategory(category.id, {
+                id: category.id,
+                name: editingName.trim(),
+            });
+            setSnackbar({ open: true, message: "Category updated.", severity: "success" });
+            setEditingId(null);
+            setEditingName("");
+            loadCategories();
+        } catch (err) {
+            console.error(err);
+            setSnackbar({
+                open: true,
+                message: err.message || "Failed to update category.",
+                severity: "error",
+            });
+        }
+    };
+
+    const handleDelete = async (category) => {
+        if (!window.confirm(`Delete category "${category.name}"?`)) return;
+        try {
+            await deleteIncomeCategory(category.id);
+            setSnackbar({ open: true, message: "Category deleted.", severity: "success" });
+            loadCategories();
+        } catch (err) {
+            console.error(err);
+            setSnackbar({
+                open: true,
+                message: err.message || "Failed to delete category.",
                 severity: "error",
             });
         }
     };
 
     return (
-        <Paper
-            elevation={3}
-            sx={(theme) => ({
-                p: 2,
-                borderRadius: 2,
-                backgroundColor:
-                    theme.palette.mode === "dark"
-                        ? "rgba(255,255,255,0.05)"
-                        : "rgba(255,255,255,0.7)",
-                backdropFilter: "blur(10px)",
-                mt: 3,
-            })}
-        >
-            <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Typography variant="h6">
-                    {editingCategory ? "Edit Income Category" : "Add New Income Category"}
-                </Typography>
-                <IconButton onClick={() => setOpen(!open)}>
-                    {open ? <RemoveIcon /> : <AddIcon />}
-                </IconButton>
-            </Box>
-            <Collapse in={open}>
-                <Divider sx={{ my: 2 }} />
-                <Box
-                    component="form"
-                    onSubmit={handleSubmit}
-                    sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-                >
-                    <TextField
-                        label="Category Name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                    />
-                    <Button variant="contained" color="primary" type="submit">
-                        {editingCategory ? "Update Category" : "Add Category"}
-                    </Button>
+        <Box>
+            {/* Add New Form */}
+            <Paper sx={{ p: 2, mb: 3 }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                    <Typography variant="h6">Add New Income Category</Typography>
+                    <IconButton onClick={() => setOpenForm(!openForm)}>
+                        {openForm ? <RemoveIcon /> : <AddIcon />}
+                    </IconButton>
                 </Box>
-            </Collapse>
+                <Collapse in={openForm}>
+                    <Divider sx={{ my: 2 }} />
+                    <Box
+                        component="form"
+                        onSubmit={handleFormSubmit}
+                        sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}
+                    >
+                        <TextField
+                            label="Name"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleFormChange}
+                            required
+                        />
+                        <Button variant="contained" type="submit">
+                            Add
+                        </Button>
+                    </Box>
+                </Collapse>
+            </Paper>
+
+            {/* Category List */}
+            <Paper sx={{ p: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                    Existing Income Categories
+                </Typography>
+                {categories.map((category) => (
+                    <Box
+                        key={category.id}
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        p={1}
+                        borderBottom="1px solid rgba(0,0,0,0.1)"
+                    >
+                        {editingId === category.id ? (
+                            <>
+                                <TextField
+                                    size="small"
+                                    value={editingName}
+                                    onChange={(e) => setEditingName(e.target.value)}
+                                    sx={{ flexGrow: 1 }}
+                                />
+                                <Box>
+                                    <IconButton onClick={() => saveEdit(category)}>
+                                        <SaveIcon />
+                                    </IconButton>
+                                    <IconButton onClick={cancelEdit}>
+                                        <CloseIcon />
+                                    </IconButton>
+                                </Box>
+                            </>
+                        ) : (
+                            <>
+                                <Typography>{category.name}</Typography>
+                                <Box>
+                                    {category.name !== "Unreviewed" && (
+                                        <>
+                                            <IconButton onClick={() => startEdit(category)}>
+                                                <EditIcon />
+                                            </IconButton>
+                                            <IconButton
+                                                onClick={() => handleDelete(category)}
+                                                color="error"
+                                            >
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </>
+                                    )}
+                                </Box>
+                            </>
+                        )}
+                    </Box>
+                ))}
+            </Paper>
+
+            {/* Snackbar floating at the bottom */}
             <Snackbar
                 open={snackbar.open}
                 autoHideDuration={4000}
-                onClose={() => setSnackbar({ ...snackbar, open: false })}
+                onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
                 anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
             >
                 <Alert
                     severity={snackbar.severity}
-                    onClose={() => setSnackbar({ ...snackbar, open: false })}
+                    variant="filled"
+                    onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+                    sx={{ width: "100%" }}
                 >
                     {snackbar.message}
                 </Alert>
             </Snackbar>
-        </Paper>
+        </Box>
     );
 };
 

@@ -27,6 +27,12 @@ public class IncomeCategoriesController : ControllerBase
     public async Task<ActionResult<IncomeCategory>> PostCategory(IncomeCategory category)
     {
         await using var ctx = _dbSvc.CreateDbContext();
+
+        var exists = await ctx.IncomeCategories
+            .AnyAsync(c => c.Name.ToLower() == category.Name.ToLower());
+        if (exists)
+            return Conflict("A category with that name already exists.");
+
         ctx.IncomeCategories.Add(category);
         await ctx.SaveChangesAsync();
         return CreatedAtAction(nameof(GetCategories), new { id = category.Id }, category);
@@ -35,39 +41,41 @@ public class IncomeCategoriesController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<IActionResult> PutCategory(int id, IncomeCategory updated)
     {
-        if (id != updated.Id) return BadRequest("ID mismatch");
+        if (id != updated.Id)
+            return BadRequest("ID mismatch");
 
         await using var ctx = _dbSvc.CreateDbContext();
 
-        var exists = await ctx.IncomeCategories
+        var existing = await ctx.IncomeCategories.FindAsync(id);
+        if (existing == null)
+            return NotFound();
+
+        if (existing.Name == "Unreviewed")
+            return BadRequest("Cannot edit the default 'Unreviewed' category.");
+
+        var conflict = await ctx.IncomeCategories
             .AnyAsync(c => c.Id != id && c.Name.ToLower() == updated.Name.ToLower());
-        if (exists)
+        if (conflict)
             return Conflict("A category with that name already exists.");
 
-        ctx.Entry(updated).State = EntityState.Modified;
+        existing.Name = updated.Name;
 
-        try
-        {
-            await ctx.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!ctx.IncomeCategories.Any(e => e.Id == id))
-                return NotFound();
-            else throw;
-        }
-
+        await ctx.SaveChangesAsync();
         return NoContent();
     }
-
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteCategory(int id)
     {
         await using var ctx = _dbSvc.CreateDbContext();
         var category = await ctx.IncomeCategories.FindAsync(id);
+
         if (category == null || category.Name == "Unreviewed")
             return BadRequest("Cannot delete default or missing category");
+
+        var isUsed = await ctx.Incomes.AnyAsync(i => i.CategoryId == id);
+        if (isUsed)
+            return Conflict("Cannot delete category because it is in use.");
 
         ctx.IncomeCategories.Remove(category);
         await ctx.SaveChangesAsync();

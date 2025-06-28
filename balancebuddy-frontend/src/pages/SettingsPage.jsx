@@ -146,17 +146,6 @@ const SettingsPage = ({ mode, toggleMode }) => {
                     onSuccess={loadCategories}
                     editingCategory={editingExpenseCategory}
                 />
-                <Box mt={2}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <Typography variant="h6">Existing Categories</Typography>
-                        <IconButton onClick={() => setShowExpenseCategories(p => !p)}>
-                            {showExpenseCategories ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                        </IconButton>
-                    </Box>
-                    <Collapse in={showExpenseCategories}>
-                        {renderCategoryList(expenseCategories, true)}
-                    </Collapse>
-                </Box>
 
                 {/* Income Categories */}
                 <Typography variant="h5" mt={5}>Income Categories</Typography>
@@ -164,17 +153,6 @@ const SettingsPage = ({ mode, toggleMode }) => {
                     onSuccess={loadCategories}
                     editingCategory={editingIncomeCategory}
                 />
-                <Box mt={2}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <Typography variant="h6">Existing Categories</Typography>
-                        <IconButton onClick={() => setShowIncomeCategories(p => !p)}>
-                            {showIncomeCategories ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                        </IconButton>
-                    </Box>
-                    <Collapse in={showIncomeCategories}>
-                        {renderCategoryList(incomeCategories, false)}
-                    </Collapse>
-                </Box>
             </Paper>
 
             {/* Snackbar */}
