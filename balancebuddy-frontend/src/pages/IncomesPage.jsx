@@ -1,9 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-    fetchIncomes,
-    createIncome,
-    deleteIncome,
-} from "../api/incomes";
+import { fetchIncomes, createIncome, deleteIncome } from "../api/incomes";
 import IncomesList from "../features/incomes/IncomesList";
 import IncomeForm from "../features/incomes/IncomeForm";
 
@@ -11,11 +7,8 @@ const IncomesPage = () => {
     const [incomes, setIncomes] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    /* ---------- helpers ---------- */
-
     const loadIncomes = async () => {
         try {
-            setLoading(true);
             const data = await fetchIncomes();
             setIncomes(data);
         } catch (err) {
@@ -35,23 +28,22 @@ const IncomesPage = () => {
         await loadIncomes();
     };
 
-    /* ---------- mount ---------- */
-
-    useEffect(() => { loadIncomes(); }, []);
-
-    /* ---------- UI ---------- */
+    useEffect(() => {
+        loadIncomes();
+    }, []);
 
     return (
         <div>
             <IncomeForm onSubmit={handleCreate} />
-
-            {loading
-                ? <p>Loading...</p>
-                : <IncomesList
+            {loading ? (
+                <p>Loading...</p>
+            ) : (
+                <IncomesList
                     incomes={incomes}
                     onDelete={handleDelete}
                     refreshIncomes={loadIncomes}
-                />}
+                />
+            )}
         </div>
     );
 };

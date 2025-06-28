@@ -27,7 +27,7 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
     useEffect(() => {
         fetchIncomeCategories()
             .then(setCategories)
-            .catch((e) => console.error("load income cats:", e));
+            .catch((e) => console.error("Failed to load categories:", e));
     }, []);
 
     const rows = incomes.map((i) => ({
@@ -39,14 +39,17 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
 
     const handleRowUpdate = async (newRow, oldRow) => {
         try {
-            await updateIncome(newRow.id, {
+            const payload = {
                 ...newRow,
                 amount: parseFloat(newRow.amount || "0"),
                 date:
-                    newRow.date instanceof Date && !isNaN(newRow.date)
+                    newRow.date instanceof Date && !isNaN(newRow.date.getTime())
                         ? newRow.date.toISOString()
                         : "",
-            });
+                description: newRow.description,
+                categoryId: newRow.categoryId || 0,
+            };
+            await updateIncome(newRow.id, payload);
             enqueueSnackbar("Income updated", { variant: "success" });
             refreshIncomes();
             return newRow;
@@ -84,34 +87,55 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
             headerName: "Bank",
             width: 80,
             sortable: false,
-            filterable: false,
-            renderCell: ({ value }) =>
-                value ? (
-                    <img src={value} alt="Bank" style={{ width: 50, height: 50 }} />
+            renderCell: (params) =>
+                params.row.bankIconPath ? (
+                    <img
+                        src={params.row.bankIconPath}
+                        alt="Bank Icon"
+                        style={{ height: 50, width: 50 }}
+                    />
                 ) : (
                     <span style={{ opacity: 0.3 }}>—</span>
                 ),
         },
-        { field: "date", headerName: "Date", width: 150, type: "date", editable: true },
-        { field: "description", headerName: "Description", width: 220, flex: 1, editable: true },
-        { field: "amount", headerName: "Amount", width: 120, type: "number", editable: true },
+        { field: "date", headerName: "Date", width: 150, editable: true, type: "date" },
+        {
+            field: "description",
+            headerName: "Description",
+            width: 200,
+            flex: 1,
+            editable: true,
+            sortable: false,
+        },
+        {
+            field: "amount",
+            headerName: "Amount",
+            width: 120,
+            editable: true,
+        },
         {
             field: "categoryId",
             headerName: "Category",
             width: 200,
             editable: true,
-            renderCell: (p) =>
-                categories.find((c) => c.id === p.row.categoryId)?.name ?? "Uncategorized",
-            renderEditCell: (p) => (
+            sortable: false,
+            renderCell: (params) =>
+                categories.find((c) => c.id === params.row.categoryId)?.name ||
+                "Uncategorized",
+            renderEditCell: (params) => (
                 <Select
-                    value={p.value ?? ""}
+                    value={params.value || ""}
                     onClick={(e) => e.stopPropagation()}
-                    onChange={(e) =>
-                        p.api.setEditCellValue(
-                            { id: p.id, field: "categoryId", value: e.target.value },
+                    onChange={(e) => {
+                        params.api.setEditCellValue(
+                            {
+                                id: params.id,
+                                field: "categoryId",
+                                value: e.target.value,
+                            },
                             e
-                        )
-                    }
+                        );
+                    }}
                     fullWidth
                 >
                     {categories.map((c) => (
@@ -126,16 +150,14 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
             field: "action",
             headerName: "Action",
             width: 120,
-            sortable: false,
-            filterable: false,
-            renderCell: (p) => (
+            renderCell: (params) => (
                 <Button
                     variant="outlined"
                     color="error"
                     size="small"
                     onClick={(e) => {
                         e.stopPropagation();
-                        onDelete(p.row.id);
+                        onDelete(params.row.id);
                     }}
                 >
                     Delete
@@ -146,7 +168,7 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
 
     return (
         <Box sx={{ height: 600, width: "100%" }}>
-            <Box sx={{ mb: 2, display: "flex", gap: 1 }}>
+            <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
                 <Button onClick={handleUndo} variant="outlined">
                     Undo
                 </Button>
@@ -160,10 +182,11 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
                 getRowId={(r) => r.id}
                 pageSize={5}
                 rowsPerPageOptions={[5, 10]}
-                checkboxSelection
-                disableSelectionOnClick
+                checkboxSelection={false}
+                disableRowSelectionOnClick
+                experimentalFeatures={{ newEditingApi: true }}
                 processRowUpdate={handleRowUpdate}
-                onProcessRowUpdateError={(e) => console.error("update:", e)}
+                onProcessRowUpdateError={(e) => console.error("Update error:", e)}
                 components={{ Toolbar }}
                 getRowClassName={(p) => {
                     const isUnreviewed =
@@ -173,24 +196,7 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
                         ? "unreviewed-row-dark"
                         : "unreviewed-row";
                 }}
-                slotProps={{
-                    panel: {
-                        sx: (theme) => ({
-                            ...(theme.palette.mode === "light" && {
-                                backgroundColor: "#ffffff",
-                                color: "#000000",
-                            }),
-                            ...(theme.palette.mode === "dark" && {
-                                backgroundColor: "#1e1e1e",
-                                color: "#f0f0f0",
-                            }),
-                            border: "1px solid rgba(255,255,255,0.15)",
-                            boxShadow: "0px 4px 12px rgba(0,0,0,0.8)",
-                        }),
-                    },
-                }}
             />
-
         </Box>
     );
 };

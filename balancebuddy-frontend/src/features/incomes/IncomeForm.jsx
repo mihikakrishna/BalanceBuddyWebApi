@@ -30,15 +30,16 @@ const IncomeForm = ({ onSubmit }) => {
     const [categories, setCategories] = useState([]);
     const [open, setOpen] = useState(false);
 
-    /* ---------- load categories ---------- */
     useEffect(() => {
         fetch("/api/incomecategories")
-            .then((r) => r.ok ? r.json() : Promise.reject(r.status))
+            .then((res) => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.json();
+            })
             .then(setCategories)
-            .catch((e) => console.error("Error loading income categories:", e));
+            .catch((err) => console.error("Error loading categories:", err));
     }, []);
 
-    /* ---------- handlers ---------- */
     const handleChange = (e) =>
         setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -47,18 +48,21 @@ const IncomeForm = ({ onSubmit }) => {
         await onSubmit({
             ...formData,
             amount: parseFloat(formData.amount),
-            date: formData.date?.toISOString() ?? "",
+            date: formData.date?.toISOString() || "",
         });
         setFormData({ date: null, description: "", amount: "", categoryId: "" });
         setOpen(false);
     };
 
-    /* ---------- UI ---------- */
     return (
         <Paper
             elevation={3}
             sx={(theme) => ({
-                p: 2, mt: 4, borderRadius: 3, maxWidth: 600, mx: "auto",
+                p: 2,
+                mt: 4,
+                borderRadius: 3,
+                maxWidth: 600,
+                margin: "auto",
                 backgroundColor:
                     theme.palette.mode === "dark"
                         ? "rgba(255,255,255,0.05)"
@@ -73,7 +77,7 @@ const IncomeForm = ({ onSubmit }) => {
                 </IconButton>
             </Box>
 
-            <Collapse in={open}>
+            <Collapse in={open} unmountOnExit>
                 <Divider sx={{ my: 2 }} />
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                     <Box
@@ -84,8 +88,12 @@ const IncomeForm = ({ onSubmit }) => {
                         <DatePicker
                             label="Date"
                             value={formData.date}
-                            onChange={(v) => setFormData({ ...formData, date: v })}
-                            renderInput={(p) => <TextField {...p} required fullWidth />}
+                            onChange={(newValue) =>
+                                setFormData({ ...formData, date: newValue })
+                            }
+                            renderInput={(params) => (
+                                <TextField {...params} required fullWidth />
+                            )}
                         />
                         <TextField
                             label="Description"
@@ -106,9 +114,9 @@ const IncomeForm = ({ onSubmit }) => {
                             fullWidth
                         />
                         <FormControl required fullWidth>
-                            <InputLabel id="income-cat-label">Category</InputLabel>
+                            <InputLabel id="category-label">Category</InputLabel>
                             <Select
-                                labelId="income-cat-label"
+                                labelId="category-label"
                                 name="categoryId"
                                 value={formData.categoryId}
                                 label="Category"
@@ -117,15 +125,16 @@ const IncomeForm = ({ onSubmit }) => {
                                 <MenuItem value="">
                                     <em>Select Category</em>
                                 </MenuItem>
-                                {categories.map((c) => (
-                                    <MenuItem key={c.id} value={c.id}>
-                                        {c.name}
+                                {categories.map((cat) => (
+                                    <MenuItem key={cat.id} value={cat.id}>
+                                        {cat.name}
                                     </MenuItem>
                                 ))}
                             </Select>
                         </FormControl>
                         <Button
                             variant="contained"
+                            color="primary"
                             type="submit"
                             sx={{ alignSelf: "flex-end" }}
                         >

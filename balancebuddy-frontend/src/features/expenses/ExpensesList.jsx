@@ -118,6 +118,7 @@ const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
             width: 200,
             flex: 1,
             editable: true,
+            sortable: false,
         },
         {
             field: "amount",
@@ -130,6 +131,7 @@ const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
             headerName: "Category",
             width: 200,
             editable: true,
+            sortable: false,
             renderCell: (params) => {
                 const selected = categories.find(
                     (c) => c.id === params.row.expenseCategoryId
@@ -192,8 +194,8 @@ const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
                 getRowId={(row) => row.id}
                 pageSize={5}
                 rowsPerPageOptions={[5, 10]}
-                checkboxSelection
-                disableSelectionOnClick
+                checkboxSelection={false}
+                disableRowSelectionOnClick
                 processRowUpdate={handleRowUpdate}
                 onProcessRowUpdateError={(error) => console.error("Update error:", error)}
                 experimentalFeatures={{ newEditingApi: true }}
