@@ -6,14 +6,14 @@ import {
     GridToolbarExport,
     GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
-import { Button, Typography, Box, Select, MenuItem } from "@mui/material";
+import { Button, Box, Select, MenuItem } from "@mui/material";
 import { updateIncome } from "../../api/incomes";
 import { fetchIncomeCategories } from "../../api/incomeCategory";
 import { undo, redo } from "../../api/undo";
 import { useSnackbar } from "notistack";
-import '../../App.css';
+import "../../App.css";
 
-
+/* ---------- custom toolbar ---------- */
 const Toolbar = () => (
     <GridToolbarContainer>
         <GridToolbarQuickFilter />
@@ -25,22 +25,22 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
     const { enqueueSnackbar } = useSnackbar();
     const [categories, setCategories] = useState([]);
 
-    /* ---------- categories ---------- */
+    /* ---------- load categories ---------- */
     useEffect(() => {
         fetchIncomeCategories()
             .then(setCategories)
             .catch((e) => console.error("load income cats:", e));
     }, []);
 
-    /* ---------- rows ---------- */
+    /* ---------- prep rows ---------- */
     const rows = incomes.map((i) => ({
         ...i,
         date: i.date ? new Date(i.date) : null,
-        categoryId: i.categoryId || i.category?.id || 0,
+        categoryId: i.category?.id ?? i.categoryId ?? 0,
         categoryName: i.category?.name || "Uncategorized",
     }));
 
-    /* ---------- inline edit ---------- */
+    /* ---------- update row ---------- */
     const handleRowUpdate = async (newRow, oldRow) => {
         try {
             await updateIncome(newRow.id, {
@@ -54,33 +54,31 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
             enqueueSnackbar("Income updated", { variant: "success" });
             refreshIncomes();
             return newRow;
-        } catch (e) {
+        } catch (err) {
             enqueueSnackbar("Update failed", { variant: "error" });
             return oldRow;
         }
     };
 
-    /* ---------- undo/redo ---------- */
+    /* ---------- undo / redo ---------- */
     const handleUndo = async () => {
         try {
-            const success = await undo("Income");
-            if (success) {
+            if (await undo("Income")) {
                 enqueueSnackbar("Undo successful", { variant: "success" });
                 refreshIncomes();
             }
-        } catch (err) {
+        } catch {
             enqueueSnackbar("Undo failed", { variant: "error" });
         }
     };
 
     const handleRedo = async () => {
         try {
-            const success = await redo("Income");
-            if (success) {
+            if (await redo("Income")) {
                 enqueueSnackbar("Redo successful", { variant: "success" });
                 refreshIncomes();
             }
-        } catch (err) {
+        } catch {
             enqueueSnackbar("Redo failed", { variant: "error" });
         }
     };
@@ -91,30 +89,29 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
             field: "bankIconPath",
             headerName: "Bank",
             width: 80,
-            renderCell: (params) => {
-                const iconPath = params.row.bankIconPath;
-                return iconPath ? (
-                    <img src={iconPath} alt="Bank Icon" style={{ height: 50, width: 50 }} />
+            sortable: false,
+            filterable: false,
+            renderCell: ({ value }) =>
+                value ? (
+                    <img src={value} alt="Bank" style={{ width: 50, height: 50 }} />
                 ) : (
-                    <span style={{ opacity: 0.3 }}>—</span> // or fallback icon
-                );
-            }
+                    <span style={{ opacity: 0.3 }}>—</span>
+                ),
         },
         { field: "date", headerName: "Date", width: 150, type: "date", editable: true },
-        { field: "description", headerName: "Description", width: 200, editable: true },
-        { field: "amount", headerName: "Amount", width: 120, editable: true },
+        { field: "description", headerName: "Description", width: 220, flex: 1, editable: true },
+        { field: "amount", headerName: "Amount", width: 120, type: "number", editable: true },
         {
             field: "categoryId",
             headerName: "Category",
             width: 200,
             editable: true,
-            renderCell: (p) => {
-                const sel = categories.find((c) => c.id === p.row.categoryId);
-                return sel ? sel.name : "Uncategorized";
-            },
+            renderCell: (p) =>
+                categories.find((c) => c.id === p.row.categoryId)?.name ?? "Uncategorized",
             renderEditCell: (p) => (
                 <Select
-                    value={p.value || ""}
+                    value={p.value ?? ""}
+                    onClick={(e) => e.stopPropagation()}
                     onChange={(e) =>
                         p.api.setEditCellValue(
                             { id: p.id, field: "categoryId", value: e.target.value },
@@ -135,12 +132,18 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
             field: "action",
             headerName: "Action",
             width: 120,
+            sortable: false,
+            filterable: false,
             renderCell: (p) => (
                 <Button
+                    type="button" /* avoid implicit form submit */
                     variant="outlined"
-                    size="small"
                     color="error"
-                    onClick={() => onDelete(p.row.id)}
+                    size="small"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(p.row.id);
+                    }}
                 >
                     Delete
                 </Button>
@@ -151,15 +154,13 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
     /* ---------- UI ---------- */
     return (
         <Box sx={{ height: 600, width: "100%" }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "right", mb: 2 }}>
-                <Box>
-                    <Button onClick={handleUndo} sx={{ mr: 1 }} variant="outlined">
-                        Undo
-                    </Button>
-                    <Button onClick={handleRedo} variant="outlined">
-                        Redo
-                    </Button>
-                </Box>
+            <Box sx={{ mb: 2, display: "flex", gap: 1 }}>
+                <Button onClick={handleUndo} variant="outlined">
+                    Undo
+                </Button>
+                <Button onClick={handleRedo} variant="outlined">
+                    Redo
+                </Button>
             </Box>
 
             <DataGrid
@@ -170,14 +171,12 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
                 rowsPerPageOptions={[5, 10]}
                 checkboxSelection
                 disableSelectionOnClick
+                /* ↓ no more row-form → no accidental submit → no full-page reload */
                 processRowUpdate={handleRowUpdate}
-                onProcessRowUpdateError={(e) => console.error("DG update:", e)}
-                experimentalFeatures={{ newEditingApi: true }}
+                onProcessRowUpdateError={(e) => console.error("update:", e)}
                 components={{ Toolbar }}
-                getRowClassName={(params) =>
-                    params.row.categoryName?.toLowerCase() === "unreviewed"
-                        ? "unreviewed-row"
-                        : ""
+                getRowClassName={(p) =>
+                    p.row.categoryName?.toLowerCase() === "unreviewed" ? "unreviewed-row" : ""
                 }
             />
         </Box>

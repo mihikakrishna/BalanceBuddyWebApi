@@ -138,6 +138,7 @@ const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
             renderEditCell: (params) => (
                 <Select
                     value={params.value || ""}
+                    onClick={(e) => e.stopPropagation()}
                     onChange={(e) => {
                         params.api.setEditCellValue({
                             id: params.id,
@@ -161,15 +162,20 @@ const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
             width: 120,
             renderCell: (params) => (
                 <Button
+                    type="button"
                     variant="outlined"
                     color="error"
                     size="small"
-                    onClick={() => onDelete(params.row.id)}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(params.row.id);
+                    }}
                 >
                     Delete
                 </Button>
             ),
         },
+
     ];
 
     return (
