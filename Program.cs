@@ -39,12 +39,24 @@ using (var scope = app.Services.CreateScope())
     svc.CreateNew(Path.Combine(dataDir, "balancebuddy.db"));
 }
 
+/* ───────────── Swagger (only dev) ───────────── */
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+/* ───────────── Serve React build ───────────── */
+// Ensure you ran `npm run build` and copied build output to wwwroot
+app.UseDefaultFiles(); // This will look for index.html by default
+app.UseStaticFiles();  // Serve static files (JS, CSS, etc.)
+
+/* ───────────── Routing & Controllers ───────────── */
 app.UseAuthorization();
 app.MapControllers();
+
+/* ───────────── React fallback route ───────────── */
+// This ensures client-side routing works (e.g., /settings)
+app.MapFallbackToFile("index.html");
+
 app.Run();
