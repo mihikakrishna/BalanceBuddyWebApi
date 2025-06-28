@@ -5,13 +5,12 @@ import {
     GridToolbarExport,
     GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
-import { Button, Typography, Box, Select, MenuItem } from "@mui/material";
+import { Button, Box, Select, MenuItem, useTheme } from "@mui/material";
 import { updateExpense } from "../../api/expenses";
 import { fetchExpenseCategories } from "../../api/expenseCategory";
 import { undo, redo } from "../../api/undo";
 import { useSnackbar } from "notistack";
-import '../../App.css';
-
+import "../../App.css";
 
 const CustomToolbar = () => (
     <GridToolbarContainer>
@@ -22,6 +21,7 @@ const CustomToolbar = () => (
 
 const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
     const { enqueueSnackbar } = useSnackbar();
+    const theme = useTheme();
     const [categories, setCategories] = useState([]);
 
     useEffect(() => {
@@ -101,7 +101,7 @@ const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
                 return iconPath ? (
                     <img src={iconPath} alt="Bank Icon" style={{ height: 50, width: 50 }} />
                 ) : (
-                    <span style={{ opacity: 0.3 }}>—</span> // or fallback icon
+                    <span style={{ opacity: 0.3 }}>—</span>
                 );
             }
         },
@@ -116,6 +116,7 @@ const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
             field: "description",
             headerName: "Description",
             width: 200,
+            flex: 1,
             editable: true,
         },
         {
@@ -140,11 +141,10 @@ const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
                     value={params.value || ""}
                     onClick={(e) => e.stopPropagation()}
                     onChange={(e) => {
-                        params.api.setEditCellValue({
-                            id: params.id,
-                            field: "expenseCategoryId",
-                            value: e.target.value,
-                        }, e);
+                        params.api.setEditCellValue(
+                            { id: params.id, field: "expenseCategoryId", value: e.target.value },
+                            e
+                        );
                     }}
                     fullWidth
                 >
@@ -162,7 +162,6 @@ const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
             width: 120,
             renderCell: (params) => (
                 <Button
-                    type="button"
                     variant="outlined"
                     color="error"
                     size="small"
@@ -175,20 +174,17 @@ const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
                 </Button>
             ),
         },
-
     ];
 
     return (
         <Box sx={{ height: 600, width: "100%" }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "right", mb: 2 }}>
-                <Box>
-                    <Button onClick={handleUndo} sx={{ mr: 1 }} variant="outlined">
-                        Undo
-                    </Button>
-                    <Button onClick={handleRedo} variant="outlined">
-                        Redo
-                    </Button>
-                </Box>
+            <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 2 }}>
+                <Button onClick={handleUndo} sx={{ mr: 1 }} variant="outlined">
+                    Undo
+                </Button>
+                <Button onClick={handleRedo} variant="outlined">
+                    Redo
+                </Button>
             </Box>
             <DataGrid
                 rows={rows}
@@ -204,11 +200,14 @@ const ExpensesList = ({ expenses, onDelete, refreshExpenses }) => {
                 }
                 experimentalFeatures={{ newEditingApi: true }}
                 components={{ Toolbar: CustomToolbar }}
-                getRowClassName={(params) =>
-                    params.row.categoryName?.toLowerCase() === "unreviewed"
-                        ? "unreviewed-row"
-                        : ""
-                }
+                getRowClassName={(params) => {
+                    const isUnreviewed =
+                        params.row.categoryName?.toLowerCase() === "unreviewed";
+                    if (!isUnreviewed) return "";
+                    return theme.palette.mode === "dark"
+                        ? "unreviewed-row-dark"
+                        : "unreviewed-row";
+                }}
             />
         </Box>
     );

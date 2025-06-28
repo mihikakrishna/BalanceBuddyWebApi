@@ -1,19 +1,17 @@
-﻿/// <reference path="../expenses/expenseslist.jsx" />
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import {
     DataGrid,
     GridToolbarContainer,
     GridToolbarExport,
     GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
-import { Button, Box, Select, MenuItem } from "@mui/material";
+import { Button, Box, Select, MenuItem, useTheme } from "@mui/material";
 import { updateIncome } from "../../api/incomes";
 import { fetchIncomeCategories } from "../../api/incomeCategory";
 import { undo, redo } from "../../api/undo";
 import { useSnackbar } from "notistack";
 import "../../App.css";
 
-/* ---------- custom toolbar ---------- */
 const Toolbar = () => (
     <GridToolbarContainer>
         <GridToolbarQuickFilter />
@@ -23,16 +21,15 @@ const Toolbar = () => (
 
 const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
     const { enqueueSnackbar } = useSnackbar();
+    const theme = useTheme();
     const [categories, setCategories] = useState([]);
 
-    /* ---------- load categories ---------- */
     useEffect(() => {
         fetchIncomeCategories()
             .then(setCategories)
             .catch((e) => console.error("load income cats:", e));
     }, []);
 
-    /* ---------- prep rows ---------- */
     const rows = incomes.map((i) => ({
         ...i,
         date: i.date ? new Date(i.date) : null,
@@ -40,7 +37,6 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
         categoryName: i.category?.name || "Uncategorized",
     }));
 
-    /* ---------- update row ---------- */
     const handleRowUpdate = async (newRow, oldRow) => {
         try {
             await updateIncome(newRow.id, {
@@ -60,7 +56,6 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
         }
     };
 
-    /* ---------- undo / redo ---------- */
     const handleUndo = async () => {
         try {
             if (await undo("Income")) {
@@ -83,7 +78,6 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
         }
     };
 
-    /* ---------- columns ---------- */
     const columns = [
         {
             field: "bankIconPath",
@@ -136,7 +130,6 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
             filterable: false,
             renderCell: (p) => (
                 <Button
-                    type="button" /* avoid implicit form submit */
                     variant="outlined"
                     color="error"
                     size="small"
@@ -151,7 +144,6 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
         },
     ];
 
-    /* ---------- UI ---------- */
     return (
         <Box sx={{ height: 600, width: "100%" }}>
             <Box sx={{ mb: 2, display: "flex", gap: 1 }}>
@@ -162,7 +154,6 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
                     Redo
                 </Button>
             </Box>
-
             <DataGrid
                 rows={rows}
                 columns={columns}
@@ -171,13 +162,17 @@ const IncomesList = ({ incomes, onDelete, refreshIncomes }) => {
                 rowsPerPageOptions={[5, 10]}
                 checkboxSelection
                 disableSelectionOnClick
-                /* ↓ no more row-form → no accidental submit → no full-page reload */
                 processRowUpdate={handleRowUpdate}
                 onProcessRowUpdateError={(e) => console.error("update:", e)}
                 components={{ Toolbar }}
-                getRowClassName={(p) =>
-                    p.row.categoryName?.toLowerCase() === "unreviewed" ? "unreviewed-row" : ""
-                }
+                getRowClassName={(p) => {
+                    const isUnreviewed =
+                        p.row.categoryName?.toLowerCase() === "unreviewed";
+                    if (!isUnreviewed) return "";
+                    return theme.palette.mode === "dark"
+                        ? "unreviewed-row-dark"
+                        : "unreviewed-row";
+                }}
             />
         </Box>
     );
