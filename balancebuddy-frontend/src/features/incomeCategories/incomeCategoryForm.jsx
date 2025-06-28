@@ -6,8 +6,6 @@ import {
     Typography,
     Box,
     IconButton,
-    Snackbar,
-    Alert,
     Collapse,
     Divider,
 } from "@mui/material";
@@ -24,10 +22,9 @@ import SaveIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-const IncomeCategoryForm = () => {
+const IncomeCategoryForm = ({ onSuccess, onShowSnackbar }) => {
     const [categories, setCategories] = useState([]);
     const [formData, setFormData] = useState({ name: "" });
-    const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
     const [openForm, setOpenForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [editingName, setEditingName] = useState("");
@@ -38,11 +35,7 @@ const IncomeCategoryForm = () => {
             setCategories(data);
         } catch (err) {
             console.error(err);
-            setSnackbar({
-                open: true,
-                message: err.message || "Failed to load categories.",
-                severity: "error",
-            });
+            onShowSnackbar("Failed to load income categories.", "error");
         }
     };
 
@@ -59,17 +52,14 @@ const IncomeCategoryForm = () => {
         const payload = { name: formData.name.trim() };
         try {
             await createIncomeCategory(payload);
-            setSnackbar({ open: true, message: "Category created.", severity: "success" });
+            onShowSnackbar("Category created.", "success");
             setFormData({ name: "" });
             setOpenForm(false);
             loadCategories();
+            onSuccess?.();
         } catch (err) {
             console.error(err);
-            setSnackbar({
-                open: true,
-                message: err.message || "Failed to create category.",
-                severity: "error",
-            });
+            onShowSnackbar(err.message || "Failed to create category.", "error");
         }
     };
 
@@ -89,17 +79,14 @@ const IncomeCategoryForm = () => {
                 id: category.id,
                 name: editingName.trim(),
             });
-            setSnackbar({ open: true, message: "Category updated.", severity: "success" });
+            onShowSnackbar("Category updated.", "success");
             setEditingId(null);
             setEditingName("");
             loadCategories();
+            onSuccess?.();
         } catch (err) {
             console.error(err);
-            setSnackbar({
-                open: true,
-                message: err.message || "Failed to update category.",
-                severity: "error",
-            });
+            onShowSnackbar(err.message || "Failed to update category.", "error");
         }
     };
 
@@ -107,15 +94,12 @@ const IncomeCategoryForm = () => {
         if (!window.confirm(`Delete category "${category.name}"?`)) return;
         try {
             await deleteIncomeCategory(category.id);
-            setSnackbar({ open: true, message: "Category deleted.", severity: "success" });
+            onShowSnackbar("Category deleted.", "success");
             loadCategories();
+            onSuccess?.();
         } catch (err) {
             console.error(err);
-            setSnackbar({
-                open: true,
-                message: err.message || "Failed to delete category.",
-                severity: "error",
-            });
+            onShowSnackbar(err.message || "Failed to delete category.", "error");
         }
     };
 
@@ -204,23 +188,6 @@ const IncomeCategoryForm = () => {
                     </Box>
                 ))}
             </Paper>
-
-            {/* Snackbar floating at the bottom */}
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={4000}
-                onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-            >
-                <Alert
-                    severity={snackbar.severity}
-                    variant="filled"
-                    onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-                    sx={{ width: "100%" }}
-                >
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
         </Box>
     );
 };

@@ -6,8 +6,6 @@ import {
     Typography,
     Box,
     IconButton,
-    Snackbar,
-    Alert,
     Collapse,
     Divider,
 } from "@mui/material";
@@ -24,10 +22,9 @@ import SaveIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-const ExpenseCategoryManager = () => {
+const ExpenseCategoryForm = ({ onSuccess, onShowSnackbar, editingCategory }) => {
     const [categories, setCategories] = useState([]);
     const [formData, setFormData] = useState({ name: "", budget: "" });
-    const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
     const [openForm, setOpenForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [editingValues, setEditingValues] = useState({ name: "", budget: "" });
@@ -38,11 +35,7 @@ const ExpenseCategoryManager = () => {
             setCategories(data);
         } catch (err) {
             console.error(err);
-            setSnackbar({
-                open: true,
-                message: "Failed to load categories.",
-                severity: "error",
-            });
+            onShowSnackbar("Failed to load expense categories.", "error");
         }
     };
 
@@ -62,26 +55,16 @@ const ExpenseCategoryManager = () => {
         };
         try {
             await createExpenseCategory(payload);
-            setSnackbar({ open: true, message: "Category created.", severity: "success" });
+            onShowSnackbar("Expense category created.", "success");
             setFormData({ name: "", budget: "" });
             setOpenForm(false);
             loadCategories();
+            onSuccess?.();
         } catch (err) {
             console.error(err);
-            let message = "Something went wrong.";
-            if (err.status === 409 || err.status === 400) {
-                message = err.message;
-            } else {
-                message = err.message || "Failed to create category.";
-            }
-            setSnackbar({
-                open: true,
-                message,
-                severity: "error",
-            });
+            onShowSnackbar(err.message || "Failed to create expense category.", "error");
         }
     };
-
 
     const startEdit = (category) => {
         setEditingId(category.id);
@@ -101,25 +84,19 @@ const ExpenseCategoryManager = () => {
             await updateExpenseCategory(category.id, {
                 id: category.id,
                 name: editingValues.name.trim(),
-                budget: editingValues.budget.trim() === "" ? null : parseFloat(editingValues.budget),
+                budget:
+                    editingValues.budget.trim() === ""
+                        ? null
+                        : parseFloat(editingValues.budget),
             });
-            setSnackbar({ open: true, message: "Category updated.", severity: "success" });
+            onShowSnackbar("Expense category updated.", "success");
             setEditingId(null);
             setEditingValues({ name: "", budget: "" });
             loadCategories();
+            onSuccess?.();
         } catch (err) {
             console.error(err);
-            let message = "Something went wrong.";
-            if (err.status === 409 || err.status === 400) {
-                message = err.message;
-            } else {
-                message = err.message || "Failed to update category.";
-            }
-            setSnackbar({
-                open: true,
-                message,
-                severity: "error",
-            });
+            onShowSnackbar(err.message || "Failed to update expense category.", "error");
         }
     };
 
@@ -127,24 +104,14 @@ const ExpenseCategoryManager = () => {
         if (!window.confirm(`Delete category "${category.name}"?`)) return;
         try {
             await deleteExpenseCategory(category.id);
-            setSnackbar({ open: true, message: "Category deleted.", severity: "success" });
+            onShowSnackbar("Expense category deleted.", "success");
             loadCategories();
+            onSuccess?.();
         } catch (err) {
             console.error(err);
-            let message = "Something went wrong.";
-            if (err.status === 409 || err.status === 400) {
-                message = err.message; // Show backend message
-            } else {
-                message = err.message || "Failed to delete category.";
-            }
-            setSnackbar({
-                open: true,
-                message,
-                severity: "error",
-            });
+            onShowSnackbar(err.message || "Failed to delete expense category.", "error");
         }
     };
-
 
     return (
         <Box>
@@ -187,7 +154,7 @@ const ExpenseCategoryManager = () => {
             {/* Category List */}
             <Paper sx={{ p: 2 }}>
                 <Typography variant="h6" gutterBottom>
-                    Existing Categories
+                    Existing Expense Categories
                 </Typography>
                 {categories.map((category) => (
                     <Box
@@ -205,7 +172,10 @@ const ExpenseCategoryManager = () => {
                                         size="small"
                                         value={editingValues.name}
                                         onChange={(e) =>
-                                            setEditingValues({ ...editingValues, name: e.target.value })
+                                            setEditingValues({
+                                                ...editingValues,
+                                                name: e.target.value,
+                                            })
                                         }
                                     />
                                     <TextField
@@ -214,7 +184,10 @@ const ExpenseCategoryManager = () => {
                                         label="Budget"
                                         value={editingValues.budget}
                                         onChange={(e) =>
-                                            setEditingValues({ ...editingValues, budget: e.target.value })
+                                            setEditingValues({
+                                                ...editingValues,
+                                                budget: e.target.value,
+                                            })
                                         }
                                     />
                                 </Box>
@@ -257,25 +230,8 @@ const ExpenseCategoryManager = () => {
                     </Box>
                 ))}
             </Paper>
-
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={4000}
-                onClose={() => setSnackbar({ ...snackbar, open: false })}
-                anchorOrigin={{ vertical: "top", horizontal: "center" }}
-            >
-                <Alert
-                    severity={snackbar.severity}
-                    variant="filled"
-                    onClose={() => setSnackbar({ ...snackbar, open: false })}
-                    sx={{ width: "100%" }}
-                >
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
-
         </Box>
     );
 };
 
-export default ExpenseCategoryManager;
+export default ExpenseCategoryForm;
