@@ -26,7 +26,7 @@ public class CapitalOneSavingsStatementRecord
 
 public class CapitalOneSavingsParser : IBankStatementParser
 {
-    public string BankId => "Capital One Savings";
+    public string BankId => "Capital One Checking/Savings";
 
     private readonly AppDbContext _context;
 

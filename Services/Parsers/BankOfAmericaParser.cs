@@ -14,7 +14,7 @@ public class BankOfAmericaStatementRecord
     [Index(0)]
     public DateTime Date { get; set; }
 
-    [Index(1)]
+    [Index(2)]
     public string Description { get; set; }
 
     [Index(4)]

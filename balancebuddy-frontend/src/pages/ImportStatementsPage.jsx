@@ -8,13 +8,15 @@ import {
     MenuItem,
     InputLabel,
     FormControl,
+    Snackbar,
+    Alert,
 } from "@mui/material";
 
 const ImportStatementsPage = () => {
     const [file, setFile] = useState(null);
     const [bankId, setBankId] = useState("");
     const [bankList, setBankList] = useState([]);
-    const [status, setStatus] = useState("");
+    const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "info" });
 
     useEffect(() => {
         fetch("/api/import/banks")
@@ -25,7 +27,14 @@ const ImportStatementsPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!file || !bankId) return;
+        if (!file || !bankId) {
+            setSnackbar({
+                open: true,
+                message: "Please select a bank and a CSV file.",
+                severity: "warning",
+            });
+            return;
+        }
 
         const formData = new FormData();
         formData.append("file", file);
@@ -38,15 +47,28 @@ const ImportStatementsPage = () => {
             });
 
             if (res.ok) {
-                setStatus("Import successful!");
+                setSnackbar({
+                    open: true,
+                    message: "Import successful!",
+                    severity: "success",
+                });
                 setFile(null);
                 setBankId("");
             } else {
-                setStatus("Import failed.");
+                const text = await res.text();
+                setSnackbar({
+                    open: true,
+                    message: text || "Import failed.",
+                    severity: "error",
+                });
             }
         } catch (err) {
             console.error(err);
-            setStatus("Import error.");
+            setSnackbar({
+                open: true,
+                message: "An unexpected error occurred.",
+                severity: "error",
+            });
         }
     };
 
@@ -88,7 +110,21 @@ const ImportStatementsPage = () => {
                 </Button>
             </form>
 
-            {status && <Typography sx={{ mt: 2 }}>{status}</Typography>}
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
+                anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            >
+                <Alert
+                    severity={snackbar.severity}
+                    variant="filled"
+                    onClose={() => setSnackbar({ ...snackbar, open: false })}
+                    sx={{ width: "100%" }}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </Paper>
     );
 };

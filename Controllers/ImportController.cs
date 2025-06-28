@@ -23,11 +23,21 @@ public class ImportController : ControllerBase
             return BadRequest("bankId is required.");
 
         var parser = _registry.GetParser(bankId);
-        using var stream = file.OpenReadStream();
-        parser.ParseStatement(stream);
+        try
+        {
+            using var stream = file.OpenReadStream();
+            parser.ParseStatement(stream);
+        }
+        catch (Exception ex)
+        {
+            // Log the error
+            Console.Error.WriteLine($"Parsing error: {ex.Message}");
+            return BadRequest("Unable to parse the file. Please make sure you selected the correct bank format.");
+        }
 
         return Ok("Statement imported.");
     }
+
 
     [HttpGet("banks")]
     public IActionResult GetSupportedBanks()
