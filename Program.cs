@@ -45,6 +45,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+/* ───────────── add static file serving for React ───────────── */
+app.UseDefaultFiles();      // looks for index.html by default
+app.UseStaticFiles();       // enables serving static files (React build)
+
+/* ───────────── APIs ───────────── */
 app.UseAuthorization();
 app.MapControllers();
+
+/* ───────────── React fallback ───────────── */
+app.MapFallbackToFile("index.html");   // serve React index.html for unknown routes
+
 app.Run();
