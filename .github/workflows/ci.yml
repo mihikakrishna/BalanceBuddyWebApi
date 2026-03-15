@@ -86,6 +86,11 @@ jobs:
         run: npm test -- --watchAll=false
         env:
           CI: true
+          NODE_OPTIONS: --max_old_space_size=4096
 
       - name: Build frontend
         run: npm run build
+        env:
+          CI: true
+          NODE_OPTIONS: --max_old_space_size=4096
+          GENERATE_SOURCEMAP: "false"
