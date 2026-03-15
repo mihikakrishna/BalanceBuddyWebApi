@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
     TextField,
     Button,
@@ -29,7 +29,7 @@ const IncomeCategoryForm = ({ onSuccess, onShowSnackbar }) => {
     const [editingId, setEditingId] = useState(null);
     const [editingName, setEditingName] = useState("");
 
-    const loadCategories = async () => {
+    const loadCategories = useCallback(async () => {
         try {
             const data = await fetchIncomeCategories();
             setCategories(data);
@@ -37,11 +37,11 @@ const IncomeCategoryForm = ({ onSuccess, onShowSnackbar }) => {
             console.error(err);
             onShowSnackbar("Failed to load income categories.", "error");
         }
-    };
+    }, [onShowSnackbar]);
 
     useEffect(() => {
         loadCategories();
-    }, []);
+    }, [loadCategories]);
 
     const handleFormChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });

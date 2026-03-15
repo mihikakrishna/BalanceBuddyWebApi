@@ -9,29 +9,19 @@ import {
     List,
     ListItem,
     ListItemText,
-    IconButton,
     Snackbar,
     Alert,
-    Stack,
 } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
 import ExpenseCategoryForm from "../features/expenseCategories/expenseCategoryForm";
 import IncomeCategoryForm from "../features/incomeCategories/incomeCategoryForm";
 import {
     fetchExpenseCategories,
-    deleteExpenseCategory,
 } from "../api/expenseCategory";
 import {
     fetchIncomeCategories,
-    deleteIncomeCategory,
 } from "../api/incomeCategory";
 
 const SettingsPage = ({ mode, toggleMode }) => {
-    const [expenseCategories, setExpenseCategories] = useState([]);
-    const [incomeCategories, setIncomeCategories] = useState([]);
-    const [editingExpenseCategory, setEditingExpenseCategory] = useState(null);
-    const [editingIncomeCategory, setEditingIncomeCategory] = useState(null);
     const [snackbar, setSnackbar] = useState({
         open: false,
         message: "",
@@ -40,12 +30,10 @@ const SettingsPage = ({ mode, toggleMode }) => {
 
     const loadCategories = async () => {
         try {
-            const [exp, inc] = await Promise.all([
+            await Promise.all([
                 fetchExpenseCategories(),
                 fetchIncomeCategories(),
             ]);
-            setExpenseCategories(exp);
-            setIncomeCategories(inc);
         } catch (err) {
             console.error(err);
             setSnackbar({
@@ -58,25 +46,6 @@ const SettingsPage = ({ mode, toggleMode }) => {
 
     const handleShowSnackbar = (message, severity = "info") => {
         setSnackbar({ open: true, message, severity });
-    };
-
-    const handleDelete = async (id, isExpense = true) => {
-        try {
-            if (isExpense) {
-                await deleteExpenseCategory(id);
-            } else {
-                await deleteIncomeCategory(id);
-            }
-            await loadCategories();
-            handleShowSnackbar("Category deleted.", "success");
-        } catch (err) {
-            console.error(err);
-            handleShowSnackbar(
-                err.message ||
-                "Could not delete category. Check if it is in use or try again.",
-                "warning"
-            );
-        }
     };
 
     useEffect(() => {
@@ -123,7 +92,6 @@ const SettingsPage = ({ mode, toggleMode }) => {
                 <Typography variant="h5">Expense Categories</Typography>
                 <ExpenseCategoryForm
                     onSuccess={loadCategories}
-                    editingCategory={editingExpenseCategory}
                     onShowSnackbar={handleShowSnackbar}
                 />
 
@@ -133,7 +101,6 @@ const SettingsPage = ({ mode, toggleMode }) => {
                 </Typography>
                 <IncomeCategoryForm
                     onSuccess={loadCategories}
-                    editingCategory={editingIncomeCategory}
                     onShowSnackbar={handleShowSnackbar}
                 />
             </Paper>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
     TextField,
     Button,
@@ -29,7 +29,7 @@ const ExpenseCategoryForm = ({ onSuccess, onShowSnackbar, editingCategory }) => 
     const [editingId, setEditingId] = useState(null);
     const [editingValues, setEditingValues] = useState({ name: "", budget: "" });
 
-    const loadCategories = async () => {
+    const loadCategories = useCallback(async () => {
         try {
             const data = await fetchExpenseCategories();
             setCategories(data);
@@ -37,11 +37,11 @@ const ExpenseCategoryForm = ({ onSuccess, onShowSnackbar, editingCategory }) => 
             console.error(err);
             onShowSnackbar("Failed to load expense categories.", "error");
         }
-    };
+    }, [onShowSnackbar]);
 
     useEffect(() => {
         loadCategories();
-    }, []);
+    }, [loadCategories]);
 
     const handleFormChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });

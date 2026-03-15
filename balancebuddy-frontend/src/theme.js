@@ -1,4 +1,4 @@
-﻿// styles/theme.js
+// styles/theme.js
 import { createTheme } from "@mui/material/styles";
 
 const brand = {

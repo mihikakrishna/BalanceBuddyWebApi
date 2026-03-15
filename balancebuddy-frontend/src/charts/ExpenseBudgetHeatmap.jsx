@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Plot from "react-plotly.js";
 import ExpandableChart from "./ExpandableChart";
 

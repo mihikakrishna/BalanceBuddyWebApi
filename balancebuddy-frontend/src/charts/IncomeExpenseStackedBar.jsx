@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import {
     Chart as ChartJS,
@@ -9,7 +9,6 @@ import {
     Legend,
 } from "chart.js";
 import ExpandableChart from "./ExpandableChart";
-import { chartPalette } from "../theme";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 

@@ -1,4 +1,4 @@
-﻿import BankBalancesPie from "../charts/BankBalancesPie";
+import BankBalancesPie from "../charts/BankBalancesPie";
 import ExpenseBudgetHeatmap from "../charts/ExpenseBudgetHeatmap";
 import ExpenseByCategoryPie from "../charts/ExpenseByCategoryPie";
 import IncomeExpenseStackedBar from "../charts/IncomeExpenseStackedBar";

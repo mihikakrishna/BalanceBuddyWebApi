@@ -1,4 +1,4 @@
-﻿const BASE_URL = "/api/incomes";
+const BASE_URL = "/api/incomes";
 const toNumber = (v) => (v === "" || v == null ? 0 : parseFloat(v));
 
 export async function fetchIncomes() {
