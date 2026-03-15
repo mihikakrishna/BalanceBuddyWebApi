@@ -47,16 +47,16 @@ if (app.Environment.IsDevelopment())
 }
 
 /* ───────────── Serve React build ───────────── */
-// Ensure you ran `npm run build` and copied build output to wwwroot
-app.UseDefaultFiles(); // This will look for index.html by default
-app.UseStaticFiles();  // Serve static files (JS, CSS, etc.)
+app.UseDefaultFiles(); // looks for index.html by default
+app.UseStaticFiles();  // enables serving static files (React build)
 
-/* ───────────── Routing & Controllers ───────────── */
+/* ───────────── APIs ───────────── */
 app.UseAuthorization();
 app.MapControllers();
 
-/* ───────────── React fallback route ───────────── */
-// This ensures client-side routing works (e.g., /settings)
-app.MapFallbackToFile("index.html");
+/* ───────────── React fallback ───────────── */
+app.MapFallbackToFile("index.html"); // serve React index.html for unknown routes
 
 app.Run();
+
+public partial class Program { }
