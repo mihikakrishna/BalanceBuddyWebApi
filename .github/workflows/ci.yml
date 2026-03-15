@@ -41,20 +41,28 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: List backend test projects
+        run: |
+          pwd
+          ls -la
+          ls -la tests
+          ls -la tests/BalanceBuddy.UnitTests
+          ls -la tests/BalanceBuddy.FunctionalTests
+
       - name: Restore backend projects
         run: |
-          dotnet restore BalanceBuddyWebApi.csproj
-          dotnet restore tests/BalanceBuddy.UnitTests/BalanceBuddy.UnitTests.csproj
-          dotnet restore tests/BalanceBuddy.FunctionalTests/BalanceBuddy.FunctionalTests.csproj
+          dotnet restore ./BalanceBuddyWebApi.csproj
+          dotnet restore ./tests/BalanceBuddy.UnitTests/BalanceBuddy.UnitTests.csproj
+          dotnet restore ./tests/BalanceBuddy.FunctionalTests/BalanceBuddy.FunctionalTests.csproj
 
       - name: Build backend
-        run: dotnet build BalanceBuddyWebApi.csproj --configuration Release --no-restore
+        run: dotnet build ./BalanceBuddyWebApi.csproj --configuration Release --no-restore
 
       - name: Run unit tests
-        run: dotnet test tests/BalanceBuddy.UnitTests/BalanceBuddy.UnitTests.csproj --configuration Release --no-restore --nologo -v minimal
+        run: dotnet test ./tests/BalanceBuddy.UnitTests/BalanceBuddy.UnitTests.csproj --configuration Release --no-restore --nologo -v minimal
 
       - name: Run functional tests
-        run: dotnet test tests/BalanceBuddy.FunctionalTests/BalanceBuddy.FunctionalTests.csproj --configuration Release --no-restore --nologo -v minimal
+        run: dotnet test ./tests/BalanceBuddy.FunctionalTests/BalanceBuddy.FunctionalTests.csproj --configuration Release --no-restore --nologo -v minimal
 
   frontend:
     runs-on: ubuntu-latest

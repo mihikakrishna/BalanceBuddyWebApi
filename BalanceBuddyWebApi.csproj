@@ -4,6 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests\**</DefaultItemExcludes>
+    <DefaultWebContentItemExcludes>$(DefaultWebContentItemExcludes);tests\**</DefaultWebContentItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +21,13 @@
 
   <ItemGroup>
     <Folder Include="balancebuddy-frontend\src\pages\__tests__\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="tests\**\*.cs" />
+    <Content Remove="tests\**\*" />
+    <EmbeddedResource Remove="tests\**\*" />
+    <None Remove="tests\**\*" />
   </ItemGroup>
 
 </Project>
