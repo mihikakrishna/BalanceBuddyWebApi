@@ -9,19 +9,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="480bcc91-5b90-42b6-9485-b0c594b33d0b" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.github/workflows/ci.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/ci.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.BalanceBuddyWebApi/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.BalanceBuddyWebApi/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/BalanceBuddyWebApi.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/BalanceBuddyWebApi.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Controllers/ChartsController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Controllers/ChartsController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Controllers/ImportController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Controllers/ImportController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/BalanceBuddy.FunctionalTests/BalanceBuddy.FunctionalTests.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/tests/BalanceBuddy.FunctionalTests/BalanceBuddy.FunctionalTests.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/BalanceBuddy.FunctionalTests/DIRECTORY.md" beforeDir="false" afterPath="$PROJECT_DIR$/tests/BalanceBuddy.FunctionalTests/DIRECTORY.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/BalanceBuddy.UnitTests/BalanceBuddy.UnitTests.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/tests/BalanceBuddy.UnitTests/BalanceBuddy.UnitTests.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/BalanceBuddy.UnitTests/DIRECTORY.md" beforeDir="false" afterPath="$PROJECT_DIR$/tests/BalanceBuddy.UnitTests/DIRECTORY.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/DIRECTORY.md" beforeDir="false" afterPath="$PROJECT_DIR$/tests/DIRECTORY.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/LESSONS.md" beforeDir="false" afterPath="$PROJECT_DIR$/tests/LESSONS.md" afterDir="false" />
-    </list>
+    <list default="true" id="480bcc91-5b90-42b6-9485-b0c594b33d0b" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -117,8 +105,17 @@
       <option name="presentableId" value="Default" />
       <updated>1773601743997</updated>
       <workItem from="1773601745751" duration="4030000" />
-      <workItem from="1774111030202" duration="3583000" />
+      <workItem from="1774111030202" duration="3893000" />
     </task>
+    <task id="LOCAL-00001" summary="Add backend unit and integration tests">
+      <option name="closed" value="true" />
+      <created>1774122221277</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1774122221278</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -128,6 +125,8 @@
   <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+    <MESSAGE value="Add backend unit and integration tests" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add backend unit and integration tests" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
