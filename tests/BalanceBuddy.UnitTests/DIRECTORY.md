@@ -4,7 +4,10 @@
 Contains isolated backend unit tests.
 
 ## Current scope
-- `SmokeUnitTests.cs`: basic tests for `UndoManager` and `BankStatementParserRegistry`.
+- `UndoAndRegistryTests.cs`: undo stack behavior and parser registry behavior.
+- `DatabaseServiceTests.cs`: create/open/export/seed/error-path coverage.
+- `BankStatementParsersTests.cs`: per-bank CSV mapping and parser error behavior.
+- `TestDatabaseScope.cs`: isolated SQLite test helper.
 
 ## Extension notes
 - Prefer testing one class or rule at a time.

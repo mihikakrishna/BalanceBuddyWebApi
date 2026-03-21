@@ -4,7 +4,10 @@
 Contains backend functional tests that exercise real HTTP endpoints through `WebApplicationFactory<Program>`.
 
 ## Current scope
-- `ApiSmokeTests.cs`: basic availability and create/fetch API checks.
+- `ExpensesAndIncomesFunctionalTests.cs`: full expense/income CRUD and undo/redo workflows.
+- `CategoryAndBankAccountsFunctionalTests.cs`: category rules and bank account behaviors.
+- `ImportDatabaseAndChartsFunctionalTests.cs`: import, database, and chart endpoint coverage.
+- `TestWebApplicationFactory.cs`: isolated temp-content-root test host and DB helpers.
 
 ## Extension notes
 - Use these tests for end-to-end request/response behavior and integration with the configured services.

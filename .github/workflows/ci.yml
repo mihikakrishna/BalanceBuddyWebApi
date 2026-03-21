@@ -59,10 +59,33 @@ jobs:
         run: dotnet build ./BalanceBuddyWebApi.csproj --configuration Release --no-restore
 
       - name: Run unit tests
-        run: dotnet test ./tests/BalanceBuddy.UnitTests/BalanceBuddy.UnitTests.csproj --configuration Release --no-restore --nologo -v minimal
+        run: >
+          dotnet test ./tests/BalanceBuddy.UnitTests/BalanceBuddy.UnitTests.csproj
+          --configuration Release
+          --no-restore
+          --nologo
+          -v minimal
+          /p:CollectCoverage=true
+          /p:CoverletOutputFormat=cobertura
+          '/p:ExcludeByFile=**/Controllers/*.cs%2c**/Models/*.cs%2c**/Program.cs'
+          /p:Threshold=80
+          /p:ThresholdType=line%2cbranch
+          /p:ThresholdStat=total
 
       - name: Run functional tests
-        run: dotnet test ./tests/BalanceBuddy.FunctionalTests/BalanceBuddy.FunctionalTests.csproj --configuration Release --no-restore --nologo -v minimal
+        run: >
+          dotnet test ./tests/BalanceBuddy.FunctionalTests/BalanceBuddy.FunctionalTests.csproj
+          --configuration Release
+          --no-restore
+          --nologo
+          -v minimal
+          /p:CollectCoverage=true
+          /p:CoverletOutputFormat=cobertura
+          '/p:ExcludeByFile=**/Services/Parsers/*.cs%2c**/Services/UndoManager.cs%2c**/Services/DatabaseService.cs%2c**/Models/*.cs%2c**/Program.cs'
+          /p:ExcludeByAttribute=CompilerGeneratedAttribute
+          /p:Threshold=80
+          /p:ThresholdType=line%2cbranch
+          /p:ThresholdStat=total
 
   frontend:
     runs-on: ubuntu-latest
