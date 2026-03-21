@@ -12,7 +12,7 @@ public class ChartsController : ControllerBase
     public IActionResult BankBalances()
     {
         using var ctx = _db.CreateDbContext();
-        return Ok(ctx.BankAccounts.Select(a => new { a.Name, a.Balance }));
+        return Ok(ctx.BankAccounts.Select(a => new { a.Name, a.Balance }).ToList());
     }
 
     [HttpGet("expense-budget")]

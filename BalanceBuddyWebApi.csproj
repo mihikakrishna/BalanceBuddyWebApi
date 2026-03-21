@@ -4,8 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <DefaultItemExcludes>$(DefaultItemExcludes);tests\**</DefaultItemExcludes>
-    <DefaultWebContentItemExcludes>$(DefaultWebContentItemExcludes);tests\**</DefaultWebContentItemExcludes>
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests\**;backend\**</DefaultItemExcludes>
+    <DefaultWebContentItemExcludes>$(DefaultWebContentItemExcludes);tests\**;backend\**</DefaultWebContentItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,9 +25,13 @@
 
   <ItemGroup>
     <Compile Remove="tests\**\*.cs" />
+    <Compile Remove="backend\**\*.cs" />
     <Content Remove="tests\**\*" />
+    <Content Remove="backend\**\*" />
     <EmbeddedResource Remove="tests\**\*" />
+    <EmbeddedResource Remove="backend\**\*" />
     <None Remove="tests\**\*" />
+    <None Remove="backend\**\*" />
   </ItemGroup>
 
 </Project>

@@ -22,9 +22,9 @@ public class ImportController : ControllerBase
         if (string.IsNullOrWhiteSpace(bankId))
             return BadRequest("bankId is required.");
 
-        var parser = _registry.GetParser(bankId);
         try
         {
+            var parser = _registry.GetParser(bankId);
             using var stream = file.OpenReadStream();
             parser.ParseStatement(stream);
         }
