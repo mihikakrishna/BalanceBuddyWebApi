@@ -35,6 +35,8 @@ bld/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
+# JetBrains IDE metadata (local user/project workspace state)
+.idea/
 # Uncomment if you have tasks that create the project's static files in wwwroot
 #wwwroot/
 
