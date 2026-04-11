@@ -371,3 +371,6 @@ FodyWeavers.xsd
 # Ignore the root-level data folder and everything in it
 /data/
 /balancebuddy.db
+
+# Ignore generated frontend publish output
+/wwwroot/**

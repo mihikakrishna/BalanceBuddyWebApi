@@ -11,3 +11,4 @@ React frontend for BalanceBuddy.
 ## Extension notes
 - Update `src/api/*` together with backend endpoint changes.
 - Keep page-level composition in `src/pages` and reusable UI in `src/features`/`src/charts`.
+- Dashboard charts are standardized on MUI X Charts with shared interactive controls and tests.
