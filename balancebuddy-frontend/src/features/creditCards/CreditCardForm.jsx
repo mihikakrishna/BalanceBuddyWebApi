@@ -10,6 +10,7 @@ import {
     Divider,
     FormControlLabel,
     Checkbox,
+    Alert,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
@@ -35,6 +36,7 @@ const CreditCardForm = ({ onSubmit }) => {
     const [formData, setFormData] = useState(initialFormData);
     const [open, setOpen] = useState(false);
     const [openedDateError, setOpenedDateError] = useState("");
+    const [submitError, setSubmitError] = useState("");
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -55,27 +57,34 @@ const CreditCardForm = ({ onSubmit }) => {
 
         if (!formData.openedDate) {
             setOpenedDateError("Opened date is required.");
+            setSubmitError("Opened date is required to create a card.");
             return;
         }
 
-        await onSubmit({
-            cardName: formData.cardName.trim(),
-            issuer: formData.issuer.trim(),
-            last4: formData.last4.trim() || null,
-            openedDate: formData.openedDate.toISOString(),
-            annualFee: parseFloat(formData.annualFee || "0"),
-            creditLimit: parseFloat(formData.creditLimit || "0"),
-            pointsBalance: parseInt(formData.pointsBalance || "0", 10),
-            reminderDate: formData.reminderDate?.toISOString() || null,
-            notes: formData.notes.trim() || null,
-            isClosed: formData.isClosed,
-            closedDate: formData.isClosed
-                ? formData.closedDate?.toISOString() || null
-                : null,
-        });
+        try {
+            await onSubmit({
+                cardName: formData.cardName.trim(),
+                issuer: formData.issuer.trim(),
+                last4: formData.last4.trim() || null,
+                openedDate: formData.openedDate.toISOString(),
+                annualFee: parseFloat(formData.annualFee || "0"),
+                creditLimit: parseFloat(formData.creditLimit || "0"),
+                pointsBalance: parseInt(formData.pointsBalance || "0", 10),
+                reminderDate: formData.reminderDate?.toISOString() || null,
+                notes: formData.notes.trim() || null,
+                isClosed: formData.isClosed,
+                closedDate: formData.isClosed
+                    ? formData.closedDate?.toISOString() || null
+                    : null,
+            });
+        } catch {
+            setSubmitError("Failed to create card. Please review form values and try again.");
+            return;
+        }
 
         setFormData(initialFormData);
         setOpenedDateError("");
+        setSubmitError("");
         setOpen(false);
     };
 
@@ -104,6 +113,11 @@ const CreditCardForm = ({ onSubmit }) => {
 
             <Collapse in={open} unmountOnExit>
                 <Divider sx={{ my: 2 }} />
+                {submitError ? (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                        {submitError}
+                    </Alert>
+                ) : null}
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                     <Box
                         component="form"
@@ -143,7 +157,10 @@ const CreditCardForm = ({ onSubmit }) => {
                             value={formData.openedDate}
                             onChange={(newValue) => {
                                 setFormData((prev) => ({ ...prev, openedDate: newValue }));
-                                if (newValue) setOpenedDateError("");
+                                if (newValue) {
+                                    setOpenedDateError("");
+                                    setSubmitError("");
+                                }
                             }}
                             renderInput={(params) => (
                                 <TextField
