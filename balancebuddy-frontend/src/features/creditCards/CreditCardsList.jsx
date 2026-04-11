@@ -362,17 +362,17 @@ const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards, listType 
                                 </Typography>
                             </Tooltip>
                         ) : (
-                            <Typography
-                                variant="body2"
+                            <Box
                                 sx={{
-                                    whiteSpace: "nowrap",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    alignItems: "center",
                                     flexGrow: 1,
+                                    minWidth: 0,
                                 }}
                             >
-                                {""}
-                            </Typography>
+                                <Typography variant="body2">-</Typography>
+                            </Box>
                         )}
                         <IconButton
                             size="small"
@@ -418,6 +418,7 @@ const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards, listType 
     const centeredHeaderColumns = columns.map((column) => ({
         ...column,
         headerAlign: "center",
+        align: column.field === "notes" ? "left" : "center",
     }));
 
     return (
@@ -451,6 +452,10 @@ const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards, listType 
                             : ""
                     }
                     sx={{
+                        "& .MuiDataGrid-cell": {
+                            display: "flex",
+                            alignItems: "center",
+                        },
                         "& .warning-row": {
                             backgroundColor:
                                 theme.palette.mode === "dark"

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Box } from "@mui/material";
 import {
     fetchCreditCards,
     createCreditCard,
@@ -43,20 +44,22 @@ const CreditCardsPage = () => {
     return (
         <div>
             <CreditCardForm onSubmit={handleCreate} />
-            <CreditCardAnnualFeeChart cards={creditCards} />
+            <Box sx={{ mt: 4 }}>
+                <CreditCardAnnualFeeChart cards={creditCards} />
+            </Box>
             {loading ? (
                 <p>Loading...</p>
             ) : (
                 <>
                     <CreditCardsList
-                        title="Open Cards Tracker"
+                        title="Open Cards"
                         cards={openCards}
                         onDelete={handleDelete}
                         refreshCreditCards={loadCreditCards}
                         listType="open"
                     />
                     <CreditCardsList
-                        title="Closed Cards Tracker"
+                        title="Closed Cards"
                         cards={closedCards}
                         onDelete={handleDelete}
                         refreshCreditCards={loadCreditCards}

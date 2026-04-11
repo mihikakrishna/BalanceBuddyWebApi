@@ -26,6 +26,34 @@ public class CreditCardsFunctionalTests
     }
 
     [Fact]
+    public async Task PostCreditCard_PersistsCreditLimit()
+    {
+        await using var factory = new TestWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        var createResponse = await client.PostAsJsonAsync("/api/creditcards", new
+        {
+            cardName = "Credit Limit Card",
+            issuer = "Chase",
+            last4 = "1234",
+            openedDate = new DateTime(2025, 1, 10),
+            annualFee = 95m,
+            creditLimit = 24000m,
+            pointsBalance = 42000,
+            reminderDate = new DateTime(2026, 4, 30),
+            notes = "Tracker card",
+            isClosed = false,
+            closedDate = (DateTime?)null
+        });
+
+        var created = await createResponse.Content.ReadFromJsonAsync<CreditCard>();
+
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+        Assert.NotNull(created);
+        Assert.Equal(24000m, created!.CreditLimit);
+    }
+
+    [Fact]
     public async Task PutCreditCard_ReturnsBadRequest_WhenIdMismatch()
     {
         await using var factory = new TestWebApplicationFactory();
@@ -41,6 +69,7 @@ public class CreditCardsFunctionalTests
             last4 = "1234",
             openedDate = new DateTime(2026, 1, 8),
             annualFee = 95m,
+            creditLimit = 20000m,
             pointsBalance = 10000,
             reminderDate = new DateTime(2026, 5, 1),
             notes = "updated",
@@ -71,6 +100,29 @@ public class CreditCardsFunctionalTests
         var payload = BuildPayload(cardName: "Closed Without Date", isClosed: true);
 
         var response = await client.PostAsJsonAsync("/api/creditcards", payload);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostCreditCard_ReturnsBadRequest_WhenOpenedDateMissing()
+    {
+        await using var factory = new TestWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/creditcards", new
+        {
+            cardName = "No Open Date",
+            issuer = "Chase",
+            last4 = "1234",
+            annualFee = 95m,
+            creditLimit = 15000m,
+            pointsBalance = 42000,
+            reminderDate = new DateTime(2026, 4, 30),
+            notes = "Tracker card",
+            isClosed = false,
+            closedDate = (DateTime?)null
+        });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -110,6 +162,7 @@ public class CreditCardsFunctionalTests
             last4 = "1234",
             openedDate = new DateTime(2025, 1, 10),
             annualFee = 95m,
+            creditLimit = 18000m,
             pointsBalance = 42000,
             reminderDate = new DateTime(2026, 4, 30),
             notes = "Tracker card",
@@ -126,6 +179,7 @@ public class CreditCardsFunctionalTests
             last4 = "1234",
             openedDate = new DateTime(2025, 1, 10),
             annualFee = 95m,
+            creditLimit = 18000m,
             pointsBalance = 42000,
             reminderDate = new DateTime(2026, 4, 30),
             notes = "Tracker card",
