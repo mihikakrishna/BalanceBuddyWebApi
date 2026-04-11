@@ -1,11 +1,25 @@
-import React from "react";
+import React, { useState } from "react";
 import {
     DataGrid,
     GridToolbarContainer,
     GridToolbarExport,
     GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
-import { Button, Box, Typography, useTheme } from "@mui/material";
+import {
+    Button,
+    Box,
+    Typography,
+    useTheme,
+    Menu,
+    MenuItem,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    TextField,
+    Tooltip,
+} from "@mui/material";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { updateCreditCard } from "../../api/creditCards";
 import { undo, redo } from "../../api/undo";
 import { useSnackbar } from "notistack";
@@ -17,22 +31,70 @@ const Toolbar = () => (
     </GridToolbarContainer>
 );
 
-const isDueSoon = (value) => {
-    if (!value) return false;
+const getReminderWarning = (value) => {
+    if (!value) return null;
     const reminderDate = value instanceof Date ? value : new Date(value);
-    if (Number.isNaN(reminderDate.getTime())) return false;
+    if (Number.isNaN(reminderDate.getTime())) return null;
 
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const reminderDay = new Date(
+        reminderDate.getFullYear(),
+        reminderDate.getMonth(),
+        reminderDate.getDate()
+    );
     const threshold = new Date(today);
     threshold.setDate(threshold.getDate() + 30);
+    const days = Math.ceil((reminderDay - today) / (1000 * 60 * 60 * 24));
+    const dateLabel = reminderDay.toLocaleDateString();
 
-    return reminderDate >= today && reminderDate <= threshold;
+    if (reminderDay < today) {
+        return `Reminder date passed on ${dateLabel}. Update this card reminder.`;
+    }
+
+    if (reminderDay <= threshold) {
+        if (days === 0) return `Reminder is due today (${dateLabel}).`;
+        if (days === 1) return `Reminder is due tomorrow (${dateLabel}).`;
+        return `Reminder is due in ${days} days (${dateLabel}).`;
+    }
+
+    return null;
 };
 
-const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards }) => {
+const toIsoOrNull = (value) => {
+    if (!(value instanceof Date) || Number.isNaN(value.getTime())) return null;
+    return value.toISOString();
+};
+
+const buildPayload = (row, overrides = {}) => {
+    const payload = {
+        ...row,
+        cardName: (row.cardName || "").trim(),
+        issuer: (row.issuer || "").trim(),
+        last4: (row.last4 || "").trim() || null,
+        openedDate: toIsoOrNull(row.openedDate),
+        annualFee: parseFloat(row.annualFee || "0"),
+        pointsBalance: parseInt(row.pointsBalance || "0", 10),
+        reminderDate: toIsoOrNull(row.reminderDate),
+        notes: (row.notes || "").trim() || null,
+        isClosed: !!row.isClosed,
+        closedDate: !!row.isClosed ? toIsoOrNull(row.closedDate) : null,
+    };
+
+    return {
+        ...payload,
+        ...overrides,
+    };
+};
+
+const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards, listType }) => {
     const { enqueueSnackbar } = useSnackbar();
     const theme = useTheme();
+    const [actionAnchorEl, setActionAnchorEl] = useState(null);
+    const [actionRow, setActionRow] = useState(null);
+    const [closeDialogOpen, setCloseDialogOpen] = useState(false);
+    const [closeDateInput, setCloseDateInput] = useState("");
+    const [closeDateError, setCloseDateError] = useState("");
 
     const rows = cards.map((c) => ({
         ...c,
@@ -43,35 +105,9 @@ const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards }) => {
 
     const handleRowUpdate = async (newRow, oldRow) => {
         try {
-            const payload = {
-                ...newRow,
-                cardName: (newRow.cardName || "").trim(),
-                issuer: (newRow.issuer || "").trim(),
-                last4: (newRow.last4 || "").trim() || null,
-                openedDate:
-                    newRow.openedDate instanceof Date &&
-                    !Number.isNaN(newRow.openedDate.getTime())
-                        ? newRow.openedDate.toISOString()
-                        : oldRow.openedDate instanceof Date &&
-                          !Number.isNaN(oldRow.openedDate.getTime())
-                            ? oldRow.openedDate.toISOString()
-                            : null,
-                annualFee: parseFloat(newRow.annualFee || "0"),
-                pointsBalance: parseInt(newRow.pointsBalance || "0", 10),
-                reminderDate:
-                    newRow.reminderDate instanceof Date &&
-                    !Number.isNaN(newRow.reminderDate.getTime())
-                        ? newRow.reminderDate.toISOString()
-                        : null,
-                notes: (newRow.notes || "").trim() || null,
-                isClosed: !!newRow.isClosed,
-                closedDate:
-                    !!newRow.isClosed &&
-                    newRow.closedDate instanceof Date &&
-                    !Number.isNaN(newRow.closedDate.getTime())
-                        ? newRow.closedDate.toISOString()
-                        : null,
-            };
+            const payload = buildPayload(newRow, {
+                openedDate: toIsoOrNull(newRow.openedDate) ?? toIsoOrNull(oldRow.openedDate),
+            });
 
             await updateCreditCard(newRow.id, payload);
             enqueueSnackbar("Credit card updated", { variant: "success" });
@@ -81,6 +117,76 @@ const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards }) => {
             enqueueSnackbar("Update failed", { variant: "error" });
             return oldRow;
         }
+    };
+
+    const openActionsMenu = (event, row) => {
+        event.stopPropagation();
+        setActionAnchorEl(event.currentTarget);
+        setActionRow(row);
+    };
+
+    const closeActionsMenu = () => {
+        setActionAnchorEl(null);
+    };
+
+    const openCloseDateDialog = () => {
+        closeActionsMenu();
+        setCloseDateInput("");
+        setCloseDateError("");
+        setCloseDialogOpen(true);
+    };
+
+    const closeCloseDateDialog = () => {
+        setCloseDialogOpen(false);
+        setCloseDateInput("");
+        setCloseDateError("");
+    };
+
+    const handleSetClosed = async () => {
+        if (!actionRow) return;
+        if (!closeDateInput) {
+            setCloseDateError("Please select a close date.");
+            return;
+        }
+
+        try {
+            const closeDate = new Date(`${closeDateInput}T12:00:00`);
+            const payload = buildPayload(actionRow, {
+                isClosed: true,
+                closedDate: closeDate.toISOString(),
+            });
+            await updateCreditCard(actionRow.id, payload);
+            enqueueSnackbar("Card closed", { variant: "success" });
+            closeCloseDateDialog();
+            setActionRow(null);
+            refreshCreditCards();
+        } catch {
+            enqueueSnackbar("Failed to close card", { variant: "error" });
+        }
+    };
+
+    const handleSetOpen = async () => {
+        if (!actionRow) return;
+        closeActionsMenu();
+        try {
+            const payload = buildPayload(actionRow, {
+                isClosed: false,
+                closedDate: null,
+            });
+            await updateCreditCard(actionRow.id, payload);
+            enqueueSnackbar("Card reopened", { variant: "success" });
+            setActionRow(null);
+            refreshCreditCards();
+        } catch {
+            enqueueSnackbar("Failed to reopen card", { variant: "error" });
+        }
+    };
+
+    const handleDeleteFromMenu = async () => {
+        if (!actionRow) return;
+        closeActionsMenu();
+        await onDelete(actionRow.id);
+        setActionRow(null);
     };
 
     const handleUndo = async () => {
@@ -106,6 +212,24 @@ const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards }) => {
     };
 
     const columns = [
+        {
+            field: "warning",
+            headerName: "Warning",
+            width: 96,
+            sortable: false,
+            filterable: false,
+            editable: false,
+            renderCell: (params) => {
+                const warningMessage = getReminderWarning(params.row.reminderDate);
+                if (!warningMessage) return null;
+
+                return (
+                    <Tooltip title={warningMessage} arrow>
+                        <WarningAmberIcon color="error" fontSize="small" />
+                    </Tooltip>
+                );
+            },
+        },
         { field: "cardName", headerName: "Card", width: 190, editable: true },
         { field: "issuer", headerName: "Issuer", width: 160, editable: true },
         { field: "last4", headerName: "Last 4", width: 100, editable: true },
@@ -145,36 +269,31 @@ const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards }) => {
             editable: true,
             sortable: false,
         },
+        ...(listType === "closed"
+            ? [
+                {
+                    field: "closedDate",
+                    headerName: "Closed Date",
+                    width: 140,
+                    type: "date",
+                    editable: true,
+                },
+            ]
+            : []),
         {
-            field: "isClosed",
-            headerName: "Closed",
-            width: 100,
-            editable: true,
-            type: "boolean",
-        },
-        {
-            field: "closedDate",
-            headerName: "Closed Date",
-            width: 140,
-            type: "date",
-            editable: true,
-        },
-        {
-            field: "action",
-            headerName: "Action",
+            field: "actions",
+            headerName: "Actions",
             width: 120,
             sortable: false,
             renderCell: (params) => (
                 <Button
                     variant="outlined"
-                    color="error"
                     size="small"
                     onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(params.row.id);
+                        openActionsMenu(e, params.row);
                     }}
                 >
-                    Delete
+                    Actions
                 </Button>
             ),
         },
@@ -205,17 +324,53 @@ const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards }) => {
                     processRowUpdate={handleRowUpdate}
                     onProcessRowUpdateError={(e) => console.error("Update error:", e)}
                     components={{ Toolbar }}
-                    getRowClassName={(p) => (isDueSoon(p.row.reminderDate) ? "due-soon-row" : "")}
+                    getRowClassName={(p) =>
+                        getReminderWarning(p.row.reminderDate) ? "warning-row" : ""
+                    }
                     sx={{
-                        "& .due-soon-row": {
+                        "& .warning-row": {
                             backgroundColor:
                                 theme.palette.mode === "dark"
-                                    ? "rgba(255, 193, 7, 0.14)"
-                                    : "rgba(255, 213, 79, 0.24)",
+                                    ? "rgba(244, 67, 54, 0.18)"
+                                    : "rgba(244, 67, 54, 0.14)",
                         },
                     }}
                 />
             </Box>
+            <Menu anchorEl={actionAnchorEl} open={!!actionAnchorEl} onClose={closeActionsMenu}>
+                <MenuItem onClick={handleDeleteFromMenu}>Delete</MenuItem>
+                {listType === "open" ? (
+                    <MenuItem onClick={openCloseDateDialog}>Close Card</MenuItem>
+                ) : (
+                    <MenuItem onClick={handleSetOpen}>Open Card</MenuItem>
+                )}
+            </Menu>
+            <Dialog open={closeDialogOpen} onClose={closeCloseDateDialog} maxWidth="xs" fullWidth>
+                <DialogTitle>Select Close Date</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        label="Close Date"
+                        type="date"
+                        value={closeDateInput}
+                        onChange={(e) => {
+                            setCloseDateInput(e.target.value);
+                            if (e.target.value) setCloseDateError("");
+                        }}
+                        required
+                        fullWidth
+                        margin="dense"
+                        error={!!closeDateError}
+                        helperText={closeDateError}
+                        InputLabelProps={{ shrink: true }}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={closeCloseDateDialog}>Cancel</Button>
+                    <Button onClick={handleSetClosed} variant="contained">
+                        Close Card
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };

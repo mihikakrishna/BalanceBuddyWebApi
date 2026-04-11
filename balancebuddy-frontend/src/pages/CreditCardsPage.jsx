@@ -51,12 +51,14 @@ const CreditCardsPage = () => {
                         cards={openCards}
                         onDelete={handleDelete}
                         refreshCreditCards={loadCreditCards}
+                        listType="open"
                     />
                     <CreditCardsList
                         title="Closed Cards Tracker"
                         cards={closedCards}
                         onDelete={handleDelete}
                         refreshCreditCards={loadCreditCards}
+                        listType="closed"
                     />
                 </>
             )}
