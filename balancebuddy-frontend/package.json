@@ -10,6 +10,7 @@
     "@mui/material": "^7.1.0",
     "@mui/x-data-grid": "^8.3.1",
     "@mui/x-date-pickers": "^8.3.1",
+    "@mui/x-charts": "^8.15.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
@@ -17,14 +18,10 @@
     "ajv": "^8.17.1",
     "ajv-keywords": "^5.1.0",
     "axios": "^1.9.0",
-    "chart.js": "^4.4.9",
     "date-fns": "^4.1.0",
     "notistack": "^3.0.2",
-    "plotly.js": "^3.0.1",
     "react": "^19.1.0",
-    "react-chartjs-2": "^5.3.0",
     "react-dom": "^19.1.0",
-    "react-plotly.js": "^2.6.0",
     "react-router-dom": "^7.6.0",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
@@ -32,6 +29,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "publish-to-wwwroot": "npm run build && powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/publish-to-wwwroot.ps1",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
