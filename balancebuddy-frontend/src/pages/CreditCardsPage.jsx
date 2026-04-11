@@ -6,6 +6,7 @@ import {
 } from "../api/creditCards";
 import CreditCardForm from "../features/creditCards/CreditCardForm";
 import CreditCardsList from "../features/creditCards/CreditCardsList";
+import CreditCardAnnualFeeChart from "../features/creditCards/CreditCardAnnualFeeChart";
 
 const CreditCardsPage = () => {
     const [creditCards, setCreditCards] = useState([]);
@@ -42,6 +43,7 @@ const CreditCardsPage = () => {
     return (
         <div>
             <CreditCardForm onSubmit={handleCreate} />
+            <CreditCardAnnualFeeChart cards={creditCards} />
             {loading ? (
                 <p>Loading...</p>
             ) : (

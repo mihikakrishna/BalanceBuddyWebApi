@@ -111,8 +111,12 @@ const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards, listType 
 
     const handleRowUpdate = async (newRow, oldRow) => {
         try {
+            if (!(newRow.openedDate instanceof Date) || Number.isNaN(newRow.openedDate.getTime())) {
+                throw new Error("Opened date is required.");
+            }
+
             const payload = buildPayload(newRow, {
-                openedDate: toIsoOrNull(newRow.openedDate) ?? toIsoOrNull(oldRow.openedDate),
+                openedDate: toIsoOrNull(newRow.openedDate),
             });
 
             await updateCreditCard(newRow.id, payload);
@@ -120,7 +124,7 @@ const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards, listType 
             refreshCreditCards();
             return newRow;
         } catch (err) {
-            enqueueSnackbar("Update failed", { variant: "error" });
+            enqueueSnackbar(err?.message || "Update failed", { variant: "error" });
             return oldRow;
         }
     };
