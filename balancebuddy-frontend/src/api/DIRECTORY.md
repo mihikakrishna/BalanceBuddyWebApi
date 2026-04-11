@@ -6,6 +6,7 @@ Client-side wrappers for backend HTTP endpoints.
 ## Current API modules
 - `expenses.js`, `incomes.js`
 - `expenseCategory.js`, `incomeCategory.js`
+- `creditCards.js`
 - `undo.js`
 
 ## Extension notes

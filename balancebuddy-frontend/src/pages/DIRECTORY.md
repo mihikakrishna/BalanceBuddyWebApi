@@ -5,6 +5,7 @@ Route-level page components for the app.
 
 ## Current pages
 - `Dashboard`
+- `CreditCardsPage`
 - `ExpensesPage`
 - `IncomesPage`
 - `ImportStatementsPage`

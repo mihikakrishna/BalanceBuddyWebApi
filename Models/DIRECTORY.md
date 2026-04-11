@@ -7,6 +7,7 @@ Domain/entity models shared across persistence and API responses.
 - Transactions: `Expense`, `Income`
 - Categories: `ExpenseCategory`, `IncomeCategory`
 - Accounts: `BankAccount`
+- Credit tracking: `CreditCard`
 
 ## Extension notes
 - Keep model changes backward-compatible with existing API contracts when possible.

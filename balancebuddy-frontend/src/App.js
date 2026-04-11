@@ -18,6 +18,7 @@ import {
     Brightness7,
     Dashboard as DashboardIcon,
     AccountBalanceWallet,
+    CreditCard as CreditCardIcon,
     AttachMoney,
     FileUpload,
     Storage,
@@ -30,12 +31,14 @@ import ImportStatementsPage from "./pages/ImportStatementsPage";
 import SettingsPage from "./pages/SettingsPage";
 import DatabasePage from "./pages/DatabasePage";
 import Dashboard from "./pages/Dashboard";
+import CreditCardsPage from "./pages/CreditCardsPage";
 import { getTheme } from "./theme";
 
 const drawerWidth = 220;
 
 const navItems = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
+    { text: "Cards", icon: <CreditCardIcon />, path: "/credit-cards" },
     { text: "Expenses", icon: <AccountBalanceWallet />, path: "/expenses" },
     { text: "Incomes", icon: <AttachMoney />, path: "/incomes" },
     { text: "Import", icon: <FileUpload />, path: "/import" },
@@ -165,6 +168,7 @@ function App() {
                             <Routes>
                                 <Route path="/database" element={<DatabasePage />} />
                                 <Route path="/dashboard" element={<Dashboard />} />
+                                <Route path="/credit-cards" element={<CreditCardsPage />} />
                                 <Route path="/expenses" element={<ExpensesPage />} />
                                 <Route path="/incomes" element={<IncomesPage />} />
                                 <Route path="/import" element={<ImportStatementsPage />} />
