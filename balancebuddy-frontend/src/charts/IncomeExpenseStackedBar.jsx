@@ -120,7 +120,7 @@ const IncomeExpenseStackedBar = ({ year: initialYear }) => {
 
     return (
         <ExpandableChart
-            title="Income vs Expense Momentum"
+            title="Income vs Expenses"
             subtitle={`Stacked monthly flow for ${year}`}
             controls={controls}
         >

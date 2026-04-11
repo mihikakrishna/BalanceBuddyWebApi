@@ -101,7 +101,7 @@ const BankBalancesPie = () => {
 
     return (
         <ExpandableChart
-            title="Bank Balance Leaderboard"
+            title="Bank Balances"
             subtitle="Account ranking with drill controls"
             controls={controls}
         >

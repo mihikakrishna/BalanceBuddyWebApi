@@ -157,7 +157,7 @@ const ExpenseByCategoryPie = () => {
 
     return (
         <ExpandableChart
-            title="Expense Composition"
+            title="Expenses"
             subtitle={`${monthLabels[month - 1]} ${year}`}
             controls={controls}
         >
