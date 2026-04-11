@@ -9,13 +9,20 @@ if (-not (Test-Path $SourceDir)) {
     throw "Build output not found at '$SourceDir'. Run 'npm run build' first."
 }
 
-$sourcePath = Resolve-Path $SourceDir
-$targetPath = Resolve-Path "..\wwwroot" -ErrorAction SilentlyContinue
+$sourcePath = (Resolve-Path $SourceDir).Path
+$targetPath = Join-Path (Resolve-Path "..").Path "wwwroot"
 
-if (-not $targetPath) {
-    $targetPath = Join-Path (Resolve-Path "..") "wwwroot"
-    New-Item -ItemType Directory -Path $targetPath | Out-Null
+# Recreate target directory to avoid stale hashed assets between publishes.
+if (Test-Path $targetPath) {
+    try {
+        Remove-Item -LiteralPath $targetPath -Recurse -Force -ErrorAction Stop
+    }
+    catch {
+        throw "Failed to clean '$targetPath'. Close any process locking wwwroot files and try again. $($_.Exception.Message)"
+    }
 }
+
+New-Item -ItemType Directory -Path $targetPath -Force | Out-Null
 
 Copy-Item -Recurse -Force (Join-Path $sourcePath "*") $targetPath
 

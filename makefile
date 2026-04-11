@@ -9,10 +9,13 @@ PUBLISH_WWWROOT=$(PUBLISH_DIR)/wwwroot
 all: build-frontend copy-dev
 
 # Publish backend + frontend
-publish: publish-backend build-frontend copy-dev copy-publish
+publish: clean-publish-dir publish-backend build-frontend copy-dev copy-publish
 
 publish-backend:
 	dotnet publish $(BACKEND_DIR) -c Release -o $(PUBLISH_DIR)
+
+clean-publish-dir:
+	rm -rf $(PUBLISH_DIR)
 
 # Build frontend
 build-frontend:
@@ -21,11 +24,13 @@ build-frontend:
 # Copy frontend build to dev wwwroot (for dotnet run)
 copy-dev:
 	mkdir -p $(DEV_WWWROOT)
+	rm -rf $(DEV_WWWROOT)/*
 	cp -r $(FRONTEND_DIR)/build/* $(DEV_WWWROOT)
 
 # Copy frontend build to publish wwwroot (for dotnet publish)
 copy-publish:
 	mkdir -p $(PUBLISH_WWWROOT)
+	rm -rf $(PUBLISH_WWWROOT)/*
 	cp -r $(FRONTEND_DIR)/build/* $(PUBLISH_WWWROOT)
 
 # Run backend in dev mode
@@ -37,3 +42,4 @@ clean:
 	rm -rf $(PUBLISH_DIR)
 	rm -rf $(DEV_WWWROOT)
 	rm -rf $(FRONTEND_DIR)/build
+	rm -rf $(BACKEND_DIR)/artifacts
