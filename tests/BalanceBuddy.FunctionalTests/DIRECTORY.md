@@ -5,6 +5,7 @@ Contains backend functional tests that exercise real HTTP endpoints through `Web
 
 ## Current scope
 - `ExpensesAndIncomesFunctionalTests.cs`: full expense/income CRUD and undo/redo workflows.
+- `CreditCardsFunctionalTests.cs`: credit card CRUD, validation, and undo/redo workflows.
 - `CategoryAndBankAccountsFunctionalTests.cs`: category rules and bank account behaviors.
 - `ImportDatabaseAndChartsFunctionalTests.cs`: import, database, and chart endpoint coverage.
 - `TestWebApplicationFactory.cs`: isolated temp-content-root test host and DB helpers.

@@ -25,3 +25,10 @@ Use this file for lessons specific to frontend build, test, and runtime behavior
 - Root cause: Copy step overlaid new build output without deleting prior hashed files.
 - Fix: Clean target directories before copy in both `makefile` (`copy-dev`, `copy-publish`) and `scripts/publish-to-wwwroot.ps1`.
 - Prevention: Always delete destination static asset folders before copying hash-named frontend builds.
+## 2026-04-11 - Date payload binding for new forms
+- Date: 2026-04-11
+- Area: Frontend credit card tracker form/grid
+- Issue: API returned 400 with `openedDate` conversion errors and "creditCard field is required".
+- Root cause: Frontend sent empty string (`""`) for a required DateTime field when no date was set/valid.
+- Fix: Enforced client-side opened-date requirement and changed payload mapping to avoid empty-string dates (reuse old valid date during grid edits).
+- Prevention: Never serialize optional/unset dates as empty strings; send valid ISO dates or `null` only when backend type allows it.

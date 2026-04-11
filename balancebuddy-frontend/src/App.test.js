@@ -14,6 +14,7 @@ jest.mock("./pages/ImportStatementsPage", () => () => <div>Import Page</div>);
 jest.mock("./pages/SettingsPage", () => () => <div>Settings Page</div>);
 jest.mock("./pages/DatabasePage", () => () => <div>Database Page</div>);
 jest.mock("./pages/Dashboard", () => () => <div>Dashboard Page</div>);
+jest.mock("./pages/CreditCardsPage", () => () => <div>Credit Cards Page</div>);
 
 import App from "./App";
 
