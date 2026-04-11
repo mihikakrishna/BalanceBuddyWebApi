@@ -23,6 +23,7 @@ const initialFormData = {
     last4: "",
     openedDate: null,
     annualFee: "",
+    creditLimit: "",
     pointsBalance: "",
     reminderDate: null,
     notes: "",
@@ -63,6 +64,7 @@ const CreditCardForm = ({ onSubmit }) => {
             last4: formData.last4.trim() || null,
             openedDate: formData.openedDate.toISOString(),
             annualFee: parseFloat(formData.annualFee || "0"),
+            creditLimit: parseFloat(formData.creditLimit || "0"),
             pointsBalance: parseInt(formData.pointsBalance || "0", 10),
             reminderDate: formData.reminderDate?.toISOString() || null,
             notes: formData.notes.trim() || null,
@@ -172,8 +174,18 @@ const CreditCardForm = ({ onSubmit }) => {
                             required
                             fullWidth
                         />
+                        <TextField
+                            label="Credit Limit"
+                            type="number"
+                            name="creditLimit"
+                            value={formData.creditLimit}
+                            onChange={handleChange}
+                            step="0.01"
+                            required
+                            fullWidth
+                        />
                         <DatePicker
-                            label="Reminder Date"
+                            label="Annual Fee Due Date"
                             value={formData.reminderDate}
                             onChange={(newValue) =>
                                 setFormData((prev) => ({ ...prev, reminderDate: newValue }))

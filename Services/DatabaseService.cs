@@ -117,6 +117,7 @@ public sealed class DatabaseService
                 Last4 TEXT NULL,
                 OpenedDate TEXT NOT NULL,
                 AnnualFee TEXT NOT NULL,
+                CreditLimit TEXT NOT NULL DEFAULT 0,
                 PointsBalance INTEGER NOT NULL,
                 ReminderDate TEXT NULL,
                 Notes TEXT NULL,
@@ -124,5 +125,35 @@ public sealed class DatabaseService
                 ClosedDate TEXT NULL
             );
             """);
+
+        EnsureCreditCardsColumnExists("CreditLimit", "TEXT NOT NULL DEFAULT 0");
+    }
+
+    private void EnsureCreditCardsColumnExists(string columnName, string columnDefinition)
+    {
+        using var connection = new SqliteConnection(ConnStr);
+        connection.Open();
+
+        using var pragma = connection.CreateCommand();
+        pragma.CommandText = "PRAGMA table_info(CreditCards);";
+
+        var exists = false;
+        using (var reader = pragma.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                if (string.Equals(reader.GetString(1), columnName, StringComparison.OrdinalIgnoreCase))
+                {
+                    exists = true;
+                    break;
+                }
+            }
+        }
+
+        if (exists) return;
+
+        using var alter = connection.CreateCommand();
+        alter.CommandText = $"ALTER TABLE CreditCards ADD COLUMN {columnName} {columnDefinition};";
+        alter.ExecuteNonQuery();
     }
 }

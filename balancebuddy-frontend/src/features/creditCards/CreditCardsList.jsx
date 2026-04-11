@@ -18,8 +18,10 @@ import {
     DialogActions,
     TextField,
     Tooltip,
+    IconButton,
 } from "@mui/material";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import { updateCreditCard } from "../../api/creditCards";
 import { undo, redo } from "../../api/undo";
 import { useSnackbar } from "notistack";
@@ -49,13 +51,13 @@ const getReminderWarning = (value) => {
     const dateLabel = reminderDay.toLocaleDateString();
 
     if (reminderDay < today) {
-        return `Reminder date passed on ${dateLabel}. Update this card reminder.`;
+        return `Annual fee due date passed on ${dateLabel}. Update this card due date.`;
     }
 
     if (reminderDay <= threshold) {
-        if (days === 0) return `Reminder is due today (${dateLabel}).`;
-        if (days === 1) return `Reminder is due tomorrow (${dateLabel}).`;
-        return `Reminder is due in ${days} days (${dateLabel}).`;
+        if (days === 0) return `Annual fee is due today (${dateLabel}).`;
+        if (days === 1) return `Annual fee is due tomorrow (${dateLabel}).`;
+        return `Annual fee is due in ${days} days (${dateLabel}).`;
     }
 
     return null;
@@ -74,6 +76,7 @@ const buildPayload = (row, overrides = {}) => {
         last4: (row.last4 || "").trim() || null,
         openedDate: toIsoOrNull(row.openedDate),
         annualFee: parseFloat(row.annualFee || "0"),
+        creditLimit: parseFloat(row.creditLimit || "0"),
         pointsBalance: parseInt(row.pointsBalance || "0", 10),
         reminderDate: toIsoOrNull(row.reminderDate),
         notes: (row.notes || "").trim() || null,
@@ -95,6 +98,9 @@ const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards, listType 
     const [closeDialogOpen, setCloseDialogOpen] = useState(false);
     const [closeDateInput, setCloseDateInput] = useState("");
     const [closeDateError, setCloseDateError] = useState("");
+    const [notesDialogOpen, setNotesDialogOpen] = useState(false);
+    const [notesRow, setNotesRow] = useState(null);
+    const [notesDraft, setNotesDraft] = useState("");
 
     const rows = cards.map((c) => ({
         ...c,
@@ -189,6 +195,34 @@ const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards, listType 
         setActionRow(null);
     };
 
+    const openNotesDialog = (event, row) => {
+        event.stopPropagation();
+        setNotesRow(row);
+        setNotesDraft(row.notes || "");
+        setNotesDialogOpen(true);
+    };
+
+    const closeNotesDialog = () => {
+        setNotesDialogOpen(false);
+        setNotesRow(null);
+        setNotesDraft("");
+    };
+
+    const handleSaveNotes = async () => {
+        if (!notesRow) return;
+        try {
+            const payload = buildPayload(notesRow, {
+                notes: notesDraft.trim() || null,
+            });
+            await updateCreditCard(notesRow.id, payload);
+            enqueueSnackbar("Notes updated", { variant: "success" });
+            closeNotesDialog();
+            refreshCreditCards();
+        } catch {
+            enqueueSnackbar("Failed to update notes", { variant: "error" });
+        }
+    };
+
     const handleUndo = async () => {
         try {
             if (await undo("CreditCard")) {
@@ -212,24 +246,30 @@ const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards, listType 
     };
 
     const columns = [
-        {
-            field: "warning",
-            headerName: "Warning",
-            width: 96,
-            sortable: false,
-            filterable: false,
-            editable: false,
-            renderCell: (params) => {
-                const warningMessage = getReminderWarning(params.row.reminderDate);
-                if (!warningMessage) return null;
+        ...(listType === "open"
+            ? [
+                {
+                    field: "warning",
+                    headerName: "",
+                    width: 58,
+                    sortable: false,
+                    filterable: false,
+                    editable: false,
+                    align: "center",
+                    headerAlign: "center",
+                    renderCell: (params) => {
+                        const warningMessage = getReminderWarning(params.row.reminderDate);
+                        if (!warningMessage) return null;
 
-                return (
-                    <Tooltip title={warningMessage} arrow>
-                        <WarningAmberIcon color="error" fontSize="small" />
-                    </Tooltip>
-                );
-            },
-        },
+                        return (
+                            <Tooltip title={warningMessage} arrow>
+                                <WarningAmberIcon color="error" fontSize="small" />
+                            </Tooltip>
+                        );
+                    },
+                },
+            ]
+            : []),
         { field: "cardName", headerName: "Card", width: 190, editable: true },
         { field: "issuer", headerName: "Issuer", width: 160, editable: true },
         { field: "last4", headerName: "Last 4", width: 100, editable: true },
@@ -248,6 +288,13 @@ const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards, listType 
             type: "number",
         },
         {
+            field: "creditLimit",
+            headerName: "Credit Limit",
+            width: 140,
+            editable: true,
+            type: "number",
+        },
+        {
             field: "pointsBalance",
             headerName: "Points",
             width: 110,
@@ -256,18 +303,83 @@ const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards, listType 
         },
         {
             field: "reminderDate",
-            headerName: "Reminder",
+            headerName: "Annual Fee Due Date",
             width: 140,
             type: "date",
             editable: true,
+            renderCell: (params) => {
+                const warningMessage =
+                    listType === "open" ? getReminderWarning(params.value) : null;
+                const dateText = params.value
+                    ? new Date(params.value).toLocaleDateString()
+                    : "";
+
+                if (!warningMessage) return <span>{dateText}</span>;
+
+                return (
+                    <Tooltip title={warningMessage} arrow>
+                        <span>{dateText}</span>
+                    </Tooltip>
+                );
+            },
         },
         {
             field: "notes",
             headerName: "Notes",
             flex: 1,
             minWidth: 180,
-            editable: true,
+            editable: false,
             sortable: false,
+            renderCell: (params) => {
+                const text = params.value || "";
+                return (
+                    <Box
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            height: "100%",
+                            gap: 0.5,
+                            width: "100%",
+                            minWidth: 0,
+                        }}
+                    >
+                        {text ? (
+                            <Tooltip title={text} arrow>
+                                <Typography
+                                    variant="body2"
+                                    sx={{
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        flexGrow: 1,
+                                    }}
+                                >
+                                    {text}
+                                </Typography>
+                            </Tooltip>
+                        ) : (
+                            <Typography
+                                variant="body2"
+                                sx={{
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    flexGrow: 1,
+                                }}
+                            >
+                                {""}
+                            </Typography>
+                        )}
+                        <IconButton
+                            size="small"
+                            onClick={(event) => openNotesDialog(event, params.row)}
+                            aria-label="Expand notes"
+                        >
+                            <OpenInFullIcon fontSize="inherit" />
+                        </IconButton>
+                    </Box>
+                );
+            },
         },
         ...(listType === "closed"
             ? [
@@ -299,6 +411,11 @@ const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards, listType 
         },
     ];
 
+    const centeredHeaderColumns = columns.map((column) => ({
+        ...column,
+        headerAlign: "center",
+    }));
+
     return (
         <Box sx={{ mt: 4 }}>
             <Typography variant="h6" sx={{ mb: 1.5 }}>
@@ -315,7 +432,7 @@ const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards, listType 
             <Box sx={{ height: 460, width: "100%" }}>
                 <DataGrid
                     rows={rows}
-                    columns={columns}
+                    columns={centeredHeaderColumns}
                     getRowId={(r) => r.id}
                     pageSize={5}
                     rowsPerPageOptions={[5, 10]}
@@ -325,7 +442,9 @@ const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards, listType 
                     onProcessRowUpdateError={(e) => console.error("Update error:", e)}
                     components={{ Toolbar }}
                     getRowClassName={(p) =>
-                        getReminderWarning(p.row.reminderDate) ? "warning-row" : ""
+                        listType === "open" && getReminderWarning(p.row.reminderDate)
+                            ? "warning-row"
+                            : ""
                     }
                     sx={{
                         "& .warning-row": {
@@ -368,6 +487,27 @@ const CreditCardsList = ({ title, cards, onDelete, refreshCreditCards, listType 
                     <Button onClick={closeCloseDateDialog}>Cancel</Button>
                     <Button onClick={handleSetClosed} variant="contained">
                         Close Card
+                    </Button>
+                </DialogActions>
+            </Dialog>
+            <Dialog open={notesDialogOpen} onClose={closeNotesDialog} fullWidth maxWidth="md">
+                <DialogTitle>Edit Notes</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        label="Notes"
+                        value={notesDraft}
+                        onChange={(e) => setNotesDraft(e.target.value)}
+                        multiline
+                        minRows={10}
+                        fullWidth
+                        autoFocus
+                        margin="dense"
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={closeNotesDialog}>Cancel</Button>
+                    <Button onClick={handleSaveNotes} variant="contained">
+                        Save Notes
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -8,6 +8,7 @@ public class CreditCard
     public string? Last4 { get; set; }
     public DateTime OpenedDate { get; set; }
     public decimal AnnualFee { get; set; }
+    public decimal CreditLimit { get; set; }
     public int PointsBalance { get; set; }
     public DateTime? ReminderDate { get; set; }
     public string? Notes { get; set; }
