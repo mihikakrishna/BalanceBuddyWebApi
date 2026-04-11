@@ -156,7 +156,7 @@ const ExpenseBudgetHeatmap = ({ year: initialYear }) => {
 
     return (
         <ExpandableChart
-            title="Budget Utilization Explorer"
+            title="Budget Utilization"
             subtitle={`Percent of monthly budget used in ${year}`}
             controls={controls}
             height={390}
