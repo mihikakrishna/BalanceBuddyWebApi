@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<Expense> Expenses => Set<Expense>();
     public DbSet<Income> Incomes => Set<Income>();
     public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
+    public DbSet<CreditCard> CreditCards => Set<CreditCard>();
     public DbSet<ExpenseCategory> ExpenseCategories => Set<ExpenseCategory>();
     public DbSet<IncomeCategory> IncomeCategories => Set<IncomeCategory>();
 

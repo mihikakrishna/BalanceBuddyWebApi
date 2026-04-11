@@ -3,7 +3,8 @@
 public enum TransactionType
 {
     Expense,
-    Income
+    Income,
+    CreditCard
 }
 
 public class TransactionOperation

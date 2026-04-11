@@ -107,5 +107,22 @@ public sealed class DatabaseService
 
             ctx.SaveChanges();
         }
+
+        ctx.Database.ExecuteSqlRaw(
+            """
+            CREATE TABLE IF NOT EXISTS CreditCards (
+                Id INTEGER NOT NULL CONSTRAINT PK_CreditCards PRIMARY KEY AUTOINCREMENT,
+                CardName TEXT NOT NULL,
+                Issuer TEXT NOT NULL,
+                Last4 TEXT NULL,
+                OpenedDate TEXT NOT NULL,
+                AnnualFee TEXT NOT NULL,
+                PointsBalance INTEGER NOT NULL,
+                ReminderDate TEXT NULL,
+                Notes TEXT NULL,
+                IsClosed INTEGER NOT NULL,
+                ClosedDate TEXT NULL
+            );
+            """);
     }
 }

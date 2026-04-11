@@ -55,5 +55,12 @@ public class ApiSmokeTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(HttpStatusCode.OK, fetchResponse.StatusCode);
     }
 
+    [Fact]
+    public async Task GetCreditCards_ReturnsOk()
+    {
+        var response = await _client.GetAsync("/api/creditcards");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
     private sealed record IdOnly(int Id);
 }
