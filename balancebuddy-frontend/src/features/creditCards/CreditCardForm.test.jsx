@@ -47,6 +47,8 @@ describe("CreditCardForm", () => {
         fireEvent.click(screen.getByRole("button", { name: /Create/i }));
 
         expect(onSubmit).not.toHaveBeenCalled();
-        expect(screen.getByText(/Opened date is required/i)).toBeInTheDocument();
+        expect(
+            screen.getByText(/Opened date is required to create a card/i)
+        ).toBeInTheDocument();
     });
 });
