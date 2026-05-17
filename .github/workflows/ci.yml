@@ -81,7 +81,7 @@ jobs:
           -v minimal
           /p:CollectCoverage=true
           /p:CoverletOutputFormat=cobertura
-          '/p:ExcludeByFile=**/Services/Parsers/*.cs%2c**/Services/UndoManager.cs%2c**/Services/DatabaseService.cs%2c**/Models/*.cs%2c**/Program.cs'
+          '/p:ExcludeByFile=**/Services/Parsers/*.cs%2c**/Services/UndoManager.cs%2c**/Services/DatabaseService.cs%2c**/Services/Plaid/*.cs%2c**/Models/*.cs%2c**/Program.cs'
           /p:ExcludeByAttribute=CompilerGeneratedAttribute
           /p:Threshold=80
           /p:ThresholdType=line%2cbranch

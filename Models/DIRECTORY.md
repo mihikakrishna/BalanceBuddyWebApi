@@ -7,6 +7,7 @@ Domain/entity models shared across persistence and API responses.
 - Transactions: `Expense`, `Income`
 - Categories: `ExpenseCategory`, `IncomeCategory`
 - Accounts: `BankAccount`
+- Plaid credentials: `PlaidItemCredential`
 - Credit tracking: `CreditCard`
 
 ## Extension notes

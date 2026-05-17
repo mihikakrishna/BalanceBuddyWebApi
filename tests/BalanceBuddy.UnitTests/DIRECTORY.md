@@ -7,6 +7,9 @@ Contains isolated backend unit tests.
 - `UndoAndRegistryTests.cs`: undo stack behavior and parser registry behavior.
 - `DatabaseServiceTests.cs`: create/open/export/seed/error-path coverage.
 - `BankStatementParsersTests.cs`: per-bank CSV mapping and parser error behavior.
+- `PlaidApiClientTests.cs`: Plaid HTTP client success and error-branch coverage.
+- `PlaidLinkServiceTests.cs`: Plaid Link service configuration and request-mapping coverage.
+- `PlaidItemCredentialStoreTests.cs`: durable Plaid credential storage coverage across fresh database contexts.
 - `TestDatabaseScope.cs`: isolated SQLite test helper.
 
 ## Extension notes
