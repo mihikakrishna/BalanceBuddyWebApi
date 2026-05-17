@@ -106,6 +106,50 @@ public class PlaidControllerFunctionalTests
         Assert.Equal("req-exchange", payload.RequestId);
     }
 
+    [Fact]
+    public async Task LinkToken_ReturnsProblemDetails_WhenPlaidApiFails_WithRequestId()
+    {
+        await using var factory = new TestWebApplicationFactory(configureTestServices: services =>
+        {
+            services.RemoveAll<IPlaidLinkService>();
+            services.AddSingleton<IPlaidLinkService>(new ApiFailurePlaidLinkService(
+                createLinkTokenException: new PlaidApiException(502, "upstream failed", "req-upstream")));
+        });
+        var client = factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/plaid/link-token", new { userId = "user-123" });
+        var payload = await response.Content.ReadFromJsonAsync<ProblemDetailsPayload>();
+
+        Assert.Equal(HttpStatusCode.BadGateway, response.StatusCode);
+        Assert.NotNull(payload);
+        Assert.Equal("Plaid request failed.", payload!.Title);
+        Assert.Equal("upstream failed", payload.Detail);
+        Assert.Equal(502, payload.Status);
+        Assert.Equal("req-upstream", payload.RequestId);
+    }
+
+    [Fact]
+    public async Task ExchangePublicToken_ReturnsProblemDetails_WhenPlaidApiFails_WithoutRequestId()
+    {
+        await using var factory = new TestWebApplicationFactory(configureTestServices: services =>
+        {
+            services.RemoveAll<IPlaidLinkService>();
+            services.AddSingleton<IPlaidLinkService>(new ApiFailurePlaidLinkService(
+                exchangePublicTokenException: new PlaidApiException(500, "plaid outage", null)));
+        });
+        var client = factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/plaid/exchange-public-token", new { publicToken = "public-token-123" });
+        var payload = await response.Content.ReadFromJsonAsync<ProblemDetailsPayload>();
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.NotNull(payload);
+        Assert.Equal("Plaid request failed.", payload!.Title);
+        Assert.Equal("plaid outage", payload.Detail);
+        Assert.Equal(500, payload.Status);
+        Assert.Null(payload.RequestId);
+    }
+
     private sealed class FakePlaidLinkService : IPlaidLinkService
     {
         public Task<PlaidLinkTokenResult> CreateLinkTokenAsync(PlaidCreateLinkTokenCommand command, CancellationToken cancellationToken)
@@ -143,7 +187,30 @@ public class PlaidControllerFunctionalTests
         }
     }
 
+    private sealed class ApiFailurePlaidLinkService : IPlaidLinkService
+    {
+        private readonly Exception? _createLinkTokenException;
+        private readonly Exception? _exchangePublicTokenException;
+
+        public ApiFailurePlaidLinkService(Exception? createLinkTokenException = null, Exception? exchangePublicTokenException = null)
+        {
+            _createLinkTokenException = createLinkTokenException;
+            _exchangePublicTokenException = exchangePublicTokenException;
+        }
+
+        public Task<PlaidLinkTokenResult> CreateLinkTokenAsync(PlaidCreateLinkTokenCommand command, CancellationToken cancellationToken)
+        {
+            throw _createLinkTokenException ?? new NotImplementedException();
+        }
+
+        public Task<PlaidExchangePublicTokenResult> ExchangePublicTokenAsync(PlaidExchangePublicTokenCommand command, CancellationToken cancellationToken)
+        {
+            throw _exchangePublicTokenException ?? new NotImplementedException();
+        }
+    }
+
     private sealed record LinkTokenPayload(string LinkToken, DateTimeOffset Expiration, string RequestId);
     private sealed record ExchangePayload(string AccessToken, string ItemId, string RequestId);
     private sealed record ExchangePersistenceFailurePayload(string Title, int Status, string Detail, string AccessToken, string ItemId, string RequestId);
+    private sealed record ProblemDetailsPayload(string Title, string Detail, int Status, string? RequestId);
 }
