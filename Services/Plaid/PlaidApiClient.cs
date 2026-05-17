@@ -51,7 +51,16 @@ public sealed class PlaidApiClient : IPlaidApiClient
             throw new PlaidApiException((int)response.StatusCode, message, error?.RequestId);
         }
 
-        var payload = await response.Content.ReadFromJsonAsync<TResponse>(SerializerOptions, cancellationToken);
+        TResponse? payload;
+        try
+        {
+            payload = await response.Content.ReadFromJsonAsync<TResponse>(SerializerOptions, cancellationToken);
+        }
+        catch (JsonException)
+        {
+            throw new PlaidApiException((int)response.StatusCode, "Plaid API returned an invalid or empty JSON response body.");
+        }
+
         if (payload is null)
         {
             throw new PlaidApiException((int)response.StatusCode, "Plaid API returned an empty response body.");
