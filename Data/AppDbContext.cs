@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<CreditCard> CreditCards => Set<CreditCard>();
     public DbSet<ExpenseCategory> ExpenseCategories => Set<ExpenseCategory>();
     public DbSet<IncomeCategory> IncomeCategories => Set<IncomeCategory>();
+    public DbSet<PlaidItemCredential> PlaidItemCredentials => Set<PlaidItemCredential>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -23,5 +24,6 @@ public class AppDbContext : DbContext
         // Optional: configure cascading deletes, default values, etc.
         modelBuilder.Entity<ExpenseCategory>().HasMany(c => c.Expenses).WithOne(e => e.Category).HasForeignKey(e => e.CategoryId).OnDelete(DeleteBehavior.SetNull);
         modelBuilder.Entity<IncomeCategory>().HasMany(c => c.Incomes).WithOne(i => i.Category).HasForeignKey(i => i.CategoryId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<PlaidItemCredential>().HasIndex(x => x.ItemId).IsUnique();
     }
 }

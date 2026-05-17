@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>BalanceBuddyWebApi-Plaid-Local</UserSecretsId>
     <DefaultItemExcludes>$(DefaultItemExcludes);tests\**;backend\**;artifacts\**</DefaultItemExcludes>
     <DefaultWebContentItemExcludes>$(DefaultWebContentItemExcludes);tests\**;backend\**;artifacts\**</DefaultWebContentItemExcludes>
   </PropertyGroup>

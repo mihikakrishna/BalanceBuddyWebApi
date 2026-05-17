@@ -8,6 +8,7 @@ Contains backend functional tests that exercise real HTTP endpoints through `Web
 - `CreditCardsFunctionalTests.cs`: credit card CRUD, validation, and undo/redo workflows.
 - `CategoryAndBankAccountsFunctionalTests.cs`: category rules and bank account behaviors.
 - `ImportDatabaseAndChartsFunctionalTests.cs`: import, database, and chart endpoint coverage.
+- `PlaidControllerFunctionalTests.cs`: Plaid controller endpoint coverage with stubbed services.
 - `TestWebApplicationFactory.cs`: isolated temp-content-root test host and DB helpers.
 
 ## Extension notes

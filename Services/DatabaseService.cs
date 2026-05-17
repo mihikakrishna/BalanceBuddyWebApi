@@ -126,6 +126,22 @@ public sealed class DatabaseService
             );
             """);
 
+        ctx.Database.ExecuteSqlRaw(
+            """
+            CREATE TABLE IF NOT EXISTS PlaidItemCredentials (
+                Id INTEGER NOT NULL CONSTRAINT PK_PlaidItemCredentials PRIMARY KEY AUTOINCREMENT,
+                ItemId TEXT NOT NULL,
+                AccessToken TEXT NOT NULL,
+                StoredAtUtc TEXT NOT NULL
+            );
+            """);
+
+        ctx.Database.ExecuteSqlRaw(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS IX_PlaidItemCredentials_ItemId
+            ON PlaidItemCredentials (ItemId);
+            """);
+
         EnsureCreditCardsColumnExists("CreditLimit", "TEXT NOT NULL DEFAULT 0");
     }
 

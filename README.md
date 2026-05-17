@@ -25,6 +25,29 @@ Development (local run)
 APIs are available under /api/...
 
 
+Plaid Local Secrets
+-------------------
+Do not store Plaid credentials in `appsettings*.json`.
+
+For local development, use .NET user secrets:
+
+```powershell
+dotnet user-secrets set "Plaid:ClientId" "<your-client-id>"
+dotnet user-secrets set "Plaid:Secret" "<your-sandbox-secret>"
+```
+
+Optional local settings:
+
+```powershell
+dotnet user-secrets set "Plaid:BaseUrl" "https://sandbox.plaid.com"
+dotnet user-secrets set "Plaid:Environment" "sandbox"
+dotnet user-secrets set "Plaid:Products:0" "transactions"
+dotnet user-secrets set "Plaid:CountryCodes:0" "US"
+```
+
+After setting secrets, restart the backend before testing Plaid endpoints.
+
+
 Production / Publishing
 -----------------------
 1. Publish backend + frontend bundle:

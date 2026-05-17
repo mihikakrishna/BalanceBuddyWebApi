@@ -3,6 +3,7 @@ using BalanceBuddyWebApi.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -12,8 +13,12 @@ internal sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _contentRoot;
     private readonly string _dbPath;
+    private readonly Action<IConfigurationBuilder>? _configureAppConfiguration;
+    private readonly Action<IServiceCollection>? _configureTestServices;
 
-    public TestWebApplicationFactory()
+    public TestWebApplicationFactory(
+        Action<IConfigurationBuilder>? configureAppConfiguration = null,
+        Action<IServiceCollection>? configureTestServices = null)
     {
         _contentRoot = Path.Combine(Path.GetTempPath(), "bb-functional-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_contentRoot);
@@ -23,12 +28,15 @@ internal sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
         File.WriteAllText(Path.Combine(_contentRoot, "index.html"), "<html><body>test</body></html>");
 
         _dbPath = Path.Combine(_contentRoot, "Data", "functional.db");
+        _configureAppConfiguration = configureAppConfiguration;
+        _configureTestServices = configureTestServices;
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
         builder.UseSetting(WebHostDefaults.ContentRootKey, _contentRoot);
+        builder.ConfigureAppConfiguration((_, config) => _configureAppConfiguration?.Invoke(config));
 
         builder.ConfigureServices(services =>
         {
@@ -40,6 +48,7 @@ internal sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
 
             services.AddSingleton(dbService);
             services.AddSingleton<UndoManager>();
+            _configureTestServices?.Invoke(services);
         });
     }
 

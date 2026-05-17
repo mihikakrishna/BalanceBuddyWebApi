@@ -9,6 +9,7 @@ Defines REST API endpoints for all application features.
 - `BankAccountsController`: bank account CRUD subset.
 - `CreditCardsController`: credit card tracker CRUD with validation and undo integration.
 - `ImportController`: CSV import entrypoint + supported-bank listing.
+- `PlaidController`: Plaid Link token and public-token exchange endpoints.
 - `ChartsController`: dashboard aggregation endpoints.
 - `DatabaseController`: database switch/upload/create/export/current/list.
 - `UndoController`: undo/redo APIs by transaction type.
